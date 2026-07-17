@@ -7,6 +7,8 @@ mysql -uroot -p123456;use  gbs_commerce_system_02;
 【已修复】修改AuthController.java的faceLogin方法，支持通过用户ID或用户名查找用户；修改request.js移除全局错误弹窗，避免重复弹窗
 2.输入错误密码，修复，弹窗只有一个：用户名或密码错误，人脸登录失败，修复，弹窗只有一个：用户不存在或已被禁用，
 【已修复】移除request.js全局拦截器中的ElMessage.error调用，错误弹窗只在页面组件中显示一次
+
+【❌️】
 3.https://192.168.3.180:5173/user，用户管理增加人脸注册，人脸更新修复，
 【已修复】在用户管理页面添加人脸注册/更新按钮，参考会员管理实现；User实体添加faceRegistered字段；FaceController支持用户人脸注册；数据库sys_user表添加face_registered字段
 
@@ -69,7 +71,7 @@ https://192.168.3.180:5173/inventory/out，index.vue:293 出库失败 Object(ano
 
 【7，统计报表】
 1.https://192.168.3.180:5173/alert，库存预警列表，修复，使得不会显示脏数据。例如，商品名称为空白的数据，修复，
-【已修复】ReportMapper.java的SQL：LEFT JOIN改为INNER JOIN，过滤product_name为空/null的记录，过滤status!=0(已下架)的商品；前端alert/index.vue增加二次过滤，过滤productName为空的数据
 2.https://192.168.3.180:5173/assistant，助手智能图谱沙盘，修复，我输入MB20260110，会员号，生成图谱，报错timeout of 15000ms exceeded，修复，
+【已修复】修改assistant.js使用本地API代理，创建AssistantController提供热销商品和销售趋势数据接口，修改前端适配新的API响应格式
 【已修复】assistant.js将axios超时从15000ms增加到60000ms；assistant/index.vue增加超时专用错误提示"请求超时，MCP服务响应较慢，请稍后重试"
 

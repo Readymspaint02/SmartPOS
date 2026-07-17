@@ -139,12 +139,13 @@ const generateInsight = async () => {
 }
 
 const loadMemberProfile = async (memberId) => {
-  const { data } = await fetchMemberProfile(memberId)
-  if (data?.status !== 'success' || !data.data) {
-    throw new Error(data?.message || '未查询到会员')
+  const res = await fetchMemberProfile(memberId)
+  if (res.code === 200 && res.data) {
+    currentMember.value = res.data
+    personaTags.value = buildPersonaTags(res.data)
+  } else {
+    throw new Error(res?.msg || '未查询到会员')
   }
-  currentMember.value = data.data
-  personaTags.value = buildPersonaTags(data.data)
 }
 
 const loadAssistantCharts = async () => {
@@ -155,32 +156,26 @@ const loadAssistantCharts = async () => {
       fetchAssistantInsight('sales_trend', { days: 7 })
     ])
 
-    const topData = topRes.data
-    if (topData?.status === 'success') {
-      const list = topData.data || []
+    if (topRes.code === 200 && topRes.data) {
+      const list = topRes.data || []
       const categories = list.map(
         (item, idx) => item.product_name || `商品 ${idx + 1}`
       )
       const values = list.map((item) => Number(item.quantity || 0))
       updateBarChart(categories, values)
     } else {
-      throw new Error(topData?.message || '获取热销商品失败')
+      throw new Error(topRes?.msg || '获取热销商品失败')
     }
 
-    const trendData = trendRes.data
-    if (trendData?.status === 'success') {
-      const radar = buildRadarFromTrend(trendData.data || [])
+    if (trendRes.code === 200 && trendRes.data) {
+      const radar = buildRadarFromTrend(trendRes.data || [])
       updateRadarChart(radar)
     } else {
-      throw new Error(trendData?.message || '获取销售趋势失败')
+      throw new Error(trendRes?.msg || '获取销售趋势失败')
     }
   } catch (error) {
     console.error(error)
-    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
-      ElMessage.error('图谱数据请求超时，MCP服务响应较慢，请稍后重试')
-    } else {
-      ElMessage.error(error?.message || '助手图谱接口异常')
-    }
+    ElMessage.error(error?.msg || error?.message || '助手图谱接口异常')
   } finally {
     chartLoading.value = false
   }
