@@ -359,11 +359,12 @@ const addProductByManual = async (code) => {
   try {
     const product = await fetchProduct(code)
     if (!product) {
+      ElMessage.error('商品不存在或已下架')
       return
     }
 
     if (product.status !== 0) {
-      ElMessage.error('该商品已下架')
+      ElMessage.error('商品不存在或已下架')
       return
     }
 
@@ -395,11 +396,7 @@ const addProductByManual = async (code) => {
     }
   } catch (error) {
     console.error('手动添加失败', error)
-    if (error?.msg) {
-      ElMessage.error(error.msg)
-    } else {
-      ElMessage.error('添加失败，请稍后重试')
-    }
+    ElMessage.error('添加失败，请稍后重试')
   } finally {
     manualLoading.value = false
     cartLoading.value = false
@@ -409,7 +406,6 @@ const addProductByManual = async (code) => {
 }
 
 const fetchProduct = async (code) => {
-  let lastError = null
   const tryRequest = async (requestFn) => {
     try {
       const res = await requestFn()
@@ -417,7 +413,6 @@ const fetchProduct = async (code) => {
         return res.data
       }
     } catch (err) {
-      lastError = err
     }
     return null
   }
@@ -432,11 +427,6 @@ const fetchProduct = async (code) => {
     return byCode
   }
 
-  if (lastError?.msg) {
-    ElMessage.error(lastError.msg)
-  } else {
-    ElMessage.error('未找到对应商品')
-  }
   return null
 }
 
@@ -583,10 +573,10 @@ const queryMember = async () => {
       memberInfo.value = res.data
       ElMessage.success(`会员：${res.data.name}，余额：¥${res.data.balance?.toFixed(2) || '0.00'}`)
     } else {
-      ElMessage.error('未找到该会员')
+      ElMessage.error('会员不存在')
     }
   } catch (error) {
-    ElMessage.error('查询会员失败')
+    ElMessage.error('会员不存在')
   }
 }
 

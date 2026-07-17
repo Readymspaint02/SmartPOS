@@ -15,6 +15,7 @@
             v-model="searchForm.orderNo"
             placeholder="请输入订单号"
             clearable
+            style="width: 200px"
             @clear="handleSearch"
           />
         </el-form-item>
