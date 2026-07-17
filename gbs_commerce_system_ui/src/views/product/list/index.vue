@@ -384,7 +384,7 @@ const searchForm = reactive({
   productName: '',
   productCode: '',
   categoryId: null,
-  status: null
+  status: 0
 });
 
 // 分页数据
@@ -500,7 +500,7 @@ const handleReset = () => {
     productName: '',
     productCode: '',
     categoryId: null,
-    status: null
+    status: 0
   });
   showBatchButtons.value = false;
   handleSearch();
@@ -622,7 +622,7 @@ const handleSubmit = async () => {
     }
   } catch (error) {
     console.error('提交失败', error);
-    ElMessage.error('操作失败，请稍后重试');
+    ElMessage.error('商品保存失败，请稍后重试');
   } finally {
     submitLoading.value = false;
   }

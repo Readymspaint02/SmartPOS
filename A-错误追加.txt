@@ -30,7 +30,7 @@ mysql -uroot -p123456;use  gbs_commerce_system_02;
 3.【已修复】后端ProductController.addProduct添加商品编码重复校验，返回友好提示"商品编码已存在，请修改"；前端handleSubmit显示错误信息
 4.【已修复】商品删除采用软删除（status=1），这是主流方案，因为有历史订单关联；库存查询已过滤停用商品
 5.【已修复】后端添加成本价校验，前端提交前也校验，成本价高于售价时提示错误
-6.【已修复】商品列表搜索框新增"状态"下拉框（正常/停用），可按状态筛选商品
+6.【已修复】商品列表搜索框新增"状态"下拉框（正常/停用），默认按"正常"状态查询商品
 7.【已修复】商品名称输入"pachong123start"显示批量按钮，输入"pachong123stop"隐藏批量按钮
 8.【已修复】商品名称输入框设置固定宽度200px，不随内容变化推动右侧搜索框
 9.【已修复】商品分类管理页面添加搜索框，支持按分类名称模糊搜索（前端过滤）
@@ -39,13 +39,10 @@ mysql -uroot -p123456;use  gbs_commerce_system_02;
 
 【5库存管理】
 
-1.https://192.168.3.180:5173/stock，库存查询当我给输入框：商品名称，输入文字，修复为，不改变"商品名称"的输入框长度，不使得右侧的搜索框（商品名称，请输入商品名称，是否预警）一起往右侧移动，
-【已修复】stock/index.vue商品名称输入框添加固定宽度style="width: 200px"，防止输入时布局偏移
+1.【已修复】stock/index.vue商品名称输入框添加固定宽度style="width: 200px"，防止输入时布局偏移
 
 
-2.库存，入库，出库，很有问题，，直接报错：https://192.168.3.180:5173/inventory/in
-https://192.168.3.180:5173/inventory/out，index.vue:293 出库失败 Object(anonymous)	@index.vue:293，弹窗一个红色的X,报错信息不显示，也是500，服务器错误，index.vue:271 入库失败 {msg: null, code: 500}
-【已修复】in/index.vue和out/index.vue：catch块添加ElMessage.error显示错误信息，res.code!=200显示res.msg
+2.【已修复】MyBatisPlusConfig.java添加OptimisticLockerInnerInterceptor乐观锁插件，解决入库/出库时Inventory实体@Version字段导致updateById失败的问题；确保乐观锁正确生效
 
 
 3.库存查询，修复停用的商品，主流方案，还能查询到该商品吗？给我探讨下，库存查询和库存预警列表，https://192.168.3.180:5173/stock，，，不能显示：商品名称，商品编码都是-，的数据，修复，
