@@ -50,11 +50,11 @@
           <el-menu
             :default-active="route.path"
             router
+            unique-opened
             class="layout-menu"
             background-color="#545c64"
             text-color="#fff"
             active-text-color="#ffd04b"
-            :default-openeds="['1']"
           >
             <template v-for="item in authMenuList" :key="item.id">
               <el-sub-menu v-if="item.children && item.children.length > 0" :index="item.path">

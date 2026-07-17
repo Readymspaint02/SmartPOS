@@ -61,12 +61,12 @@ const defaultMemberServiceBase = resolveBaseUrl({
 
 const assistantHttp = axios.create({
   baseURL: defaultAssistantBase,
-  timeout: 15000,
+  timeout: 60000,
 });
 
 const memberHttp = axios.create({
   baseURL: defaultMemberServiceBase,
-  timeout: 15000,
+  timeout: 60000,
 });
 
 export const fetchAssistantInsight = (metric, params = {}) => {

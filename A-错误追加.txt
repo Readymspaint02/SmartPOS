@@ -16,8 +16,11 @@ mysql -uroot -p123456;use  gbs_commerce_system_02;
 【3系统管理】
 
 1.https://192.168.3.180:5173/dashboard，左侧菜单，我点击了目录菜单，例如：系统管理，商品管理，修复为当我点击一个目录，其他的目录的子项菜单都收起来，，这个功能能放入【系统管理里面吗？做个按钮？还是说我已有这个按钮功能？】
+【已修复】在Layout.vue的el-menu添加unique-opened属性，实现手风琴模式（点击一个目录，其他目录自动收起）。此功能是Element Plus内置属性，自动生效，无需额外按钮
 2.新增角色，https://192.168.3.180:5173/role，分配权限，修复，将每个菜单都需要我手动选择，修复为当我点击统计报表，他下面的子菜单，例如，销售统计，库存预警，助手图谱，助手图谱访问，自动选中，
+【已修复】移除role/index.vue中el-tree的check-strictly属性，实现父子节点联动；提交时包含半选节点(getHalfCheckedKeys)；回显时只设置叶子节点避免重复勾选
 3.https://192.168.3.180:5173/role，角色管理，https://192.168.3.180:5173/menu，菜单管理，加入输入搜索框，修复，
+【已修复】角色管理页面添加角色名称和角色标识搜索框；菜单管理页面添加菜单名称搜索框和菜单类型下拉筛选，支持树形结构过滤查询
 
 【4商品管理】
 1..商品分类管理（https://192.168.3.180:5173/category），商品分类，停用，修复为
@@ -65,5 +68,7 @@ https://192.168.3.180:5173/inventory/out，index.vue:293 出库失败 Object(ano
 
 【7，统计报表】
 1.https://192.168.3.180:5173/alert，库存预警列表，修复，使得不会显示脏数据。例如，商品名称为空白的数据，修复，
+【已修复】ReportMapper.java的SQL：LEFT JOIN改为INNER JOIN，过滤product_name为空/null的记录，过滤status!=0(已下架)的商品；前端alert/index.vue增加二次过滤，过滤productName为空的数据
 2.https://192.168.3.180:5173/assistant，助手智能图谱沙盘，修复，我输入MB20260110，会员号，生成图谱，报错timeout of 15000ms exceeded，修复，
+【已修复】assistant.js将axios超时从15000ms增加到60000ms；assistant/index.vue增加超时专用错误提示"请求超时，MCP服务响应较慢，请稍后重试"
 

@@ -1,13 +1,29 @@
 <template>
   <div>
     <!-- 操作按钮 -->
-    <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <el-button type="primary" @click="handleAdd">新增菜单</el-button>
+      <el-form :inline="true" :model="menuSearchForm">
+        <el-form-item>
+          <el-input v-model="menuSearchForm.menuName" placeholder="菜单名称" clearable @clear="handleMenuSearchReset" />
+        </el-form-item>
+        <el-form-item>
+          <el-select v-model="menuSearchForm.menuType" placeholder="菜单类型" clearable @clear="handleMenuSearchReset" style="width: 120px">
+            <el-option label="目录" value="M" />
+            <el-option label="菜单" value="C" />
+            <el-option label="按钮" value="F" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleMenuSearch">查询</el-button>
+          <el-button @click="handleMenuSearchReset">重置</el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 菜单列表表格 -->
     <el-table 
-      :data="menuList" 
+      :data="filteredMenuList" 
       style="width: 100%" 
       v-loading="loading"
       row-key="id"
@@ -150,6 +166,32 @@ import {
 
 const menuList = ref([])
 const loading = ref(false)
+const menuSearchForm = ref({ menuName: '', menuType: '' })
+
+const filterMenuTree = (menus, menuName, menuType) => {
+  return menus.filter(menu => {
+    const matchName = !menuName || menu.menuName.includes(menuName)
+    const matchType = !menuType || menu.menuType === menuType
+    if (menu.children && menu.children.length > 0) {
+      const filteredChildren = filterMenuTree(menu.children, menuName, menuType)
+      if (filteredChildren.length > 0) {
+        return true
+      }
+    }
+    return matchName && matchType
+  }).map(menu => {
+    if (menu.children && menu.children.length > 0) {
+      return { ...menu, children: filterMenuTree(menu.children, menuName, menuType) }
+    }
+    return menu
+  })
+}
+
+const filteredMenuList = computed(() => {
+  const { menuName, menuType } = menuSearchForm.value
+  if (!menuName && !menuType) return menuList.value
+  return filterMenuTree(menuList.value, menuName, menuType)
+})
 const dialogVisible = ref(false)
 const formRef = ref(null)
 const isAdd = ref(true)
@@ -349,6 +391,11 @@ const submitForm = () => {
       }
     }
   })
+}
+
+const handleMenuSearch = () => {}
+const handleMenuSearchReset = () => {
+  menuSearchForm.value = { menuName: '', menuType: '' }
 }
 
 onMounted(() => {

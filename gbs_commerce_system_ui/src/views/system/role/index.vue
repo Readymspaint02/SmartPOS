@@ -1,12 +1,24 @@
 <template>
   <div>
     <!-- 操作按钮 -->
-    <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
       <el-button type="primary" @click="handleAdd">新增角色</el-button>
+      <el-form :inline="true" :model="searchForm">
+        <el-form-item>
+          <el-input v-model="searchForm.roleName" placeholder="角色名称" clearable @clear="handleSearchReset" />
+        </el-form-item>
+        <el-form-item>
+          <el-input v-model="searchForm.roleKey" placeholder="角色标识" clearable @clear="handleSearchReset" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
+          <el-button @click="handleSearchReset">重置</el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 角色列表表格 -->
-    <el-table :data="roleList" style="width: 100%" v-loading="loading">
+    <el-table :data="filteredRoleList" style="width: 100%" v-loading="loading">
       <el-table-column prop="id" label="角色ID" width="80" />
       <el-table-column prop="roleName" label="角色名称" width="150" />
       <el-table-column prop="roleKey" label="角色标识" width="150" />
@@ -56,7 +68,6 @@
         :props="{ children: 'children', label: 'menuName' }"
         :default-checked-keys="checkedMenus"
         :default-expanded-keys="expandedMenus"
-        check-strictly
       />
       <template #footer>
         <span class="dialog-footer">
@@ -84,6 +95,16 @@ import { getAllMenuList } from '@/api/modules/menu'
 
 const roleList = ref([])
 const loading = ref(false)
+const searchForm = ref({ roleName: '', roleKey: '' })
+const filteredRoleList = computed(() => {
+  const { roleName, roleKey } = searchForm.value
+  if (!roleName && !roleKey) return roleList.value
+  return roleList.value.filter(item => {
+    const matchName = !roleName || item.roleName.includes(roleName)
+    const matchKey = !roleKey || item.roleKey.includes(roleKey)
+    return matchName && matchKey
+  })
+})
 const dialogVisible = ref(false)
 const formRef = ref(null)
 const isAdd = ref(true)
@@ -128,13 +149,24 @@ const fetchMenuList = async () => {
   }
 }
 
-// 获取所有菜单ID
 const getAllMenuIds = (menus) => {
   let ids = []
   menus.forEach(menu => {
     ids.push(menu.id)
     if (menu.children && menu.children.length > 0) {
       ids = ids.concat(getAllMenuIds(menu.children))
+    }
+  })
+  return ids
+}
+
+const getLeafMenuIds = (menus) => {
+  let ids = []
+  menus.forEach(menu => {
+    if (menu.children && menu.children.length > 0) {
+      ids = ids.concat(getLeafMenuIds(menu.children))
+    } else {
+      ids.push(menu.id)
     }
   })
   return ids
@@ -170,7 +202,9 @@ const handlePermission = async (row) => {
   // 在下次DOM更新后设置树节点的选中状态
   nextTick(() => {
     if (menuTreeRef.value && checkedMenus.value.length > 0) {
-      menuTreeRef.value.setCheckedKeys(checkedMenus.value)
+      const leafIds = getLeafMenuIds(menuList.value)
+      const leafCheckedKeys = checkedMenus.value.filter(id => leafIds.includes(id))
+      menuTreeRef.value.setCheckedKeys(leafCheckedKeys)
     }
   })
 }
@@ -250,11 +284,11 @@ const handleDelete = (row) => {
 // 提交权限设置
 const submitPermission = async () => {
   try {
-    // 获取选中的菜单节点
     const checkedKeys = menuTreeRef.value.getCheckedKeys()
+    const halfCheckedKeys = menuTreeRef.value.getHalfCheckedKeys()
+    const allKeys = [...checkedKeys, ...halfCheckedKeys]
     
-    // 调用API更新角色菜单权限
-    const response = await updateRoleMenus(currentRoleId.value, checkedKeys)
+    const response = await updateRoleMenus(currentRoleId.value, allKeys)
     
     if (response.code === 200) {
       ElMessage.success('权限分配成功')
@@ -311,6 +345,11 @@ const submitForm = () => {
   })
 }
 
+
+const handleSearch = () => {}
+const handleSearchReset = () => {
+  searchForm.value = { roleName: '', roleKey: '' }
+}
 
 onMounted(() => {
   fetchRoleList()

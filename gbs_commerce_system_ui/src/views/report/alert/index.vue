@@ -32,7 +32,8 @@ const loadWarnings = async () => {
   try {
     loading.value = true
     const res = await getInventoryWarnings()
-    warningList.value = res.data || []
+    const list = res.data || []
+    warningList.value = list.filter(item => item.productName && item.productName.trim() !== '')
   } finally {
     loading.value = false
   }

@@ -59,8 +59,10 @@ public interface ReportMapper {
                 i.warning_quantity AS warningQuantity,
                 (i.stock_quantity - i.warning_quantity) AS diff
             FROM inventory i
-            LEFT JOIN product p ON p.id = i.product_id
-            WHERE i.stock_quantity <= i.warning_quantity OR i.stock_quantity <= 10
+            INNER JOIN product p ON p.id = i.product_id
+            WHERE p.product_name IS NOT NULL AND p.product_name != ''
+              AND p.status = 0
+              AND (i.stock_quantity <= i.warning_quantity OR i.stock_quantity <= 10)
             ORDER BY i.stock_quantity ASC
             """)
     List<Map<String, Object>> getInventoryWarnings();

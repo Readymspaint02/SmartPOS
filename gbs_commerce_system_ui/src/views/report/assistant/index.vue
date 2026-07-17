@@ -128,7 +128,11 @@ const generateInsight = async () => {
     ElMessage.success('助手图谱已更新')
   } catch (error) {
     console.error(error)
-    ElMessage.error(error?.message || '生成图谱失败')
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      ElMessage.error('请求超时，MCP服务响应较慢，请稍后重试')
+    } else {
+      ElMessage.error(error?.message || '生成图谱失败')
+    }
   } finally {
     loading.value = false
   }
@@ -172,7 +176,11 @@ const loadAssistantCharts = async () => {
     }
   } catch (error) {
     console.error(error)
-    ElMessage.error(error?.message || '助手图谱接口异常')
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      ElMessage.error('图谱数据请求超时，MCP服务响应较慢，请稍后重试')
+    } else {
+      ElMessage.error(error?.message || '助手图谱接口异常')
+    }
   } finally {
     chartLoading.value = false
   }
