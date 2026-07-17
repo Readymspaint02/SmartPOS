@@ -144,7 +144,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserPage, getCurrentUserInfo, createUser, updateUser, deleteUser, checkFaceRegistered, registerFace } from '@/api/modules/user'
+import { getUserPage, getCurrentUserInfo, createUser, updateUser, deleteUser } from '@/api/modules/user'
 import { getRoleAll } from '@/api/modules/role'
 import defaultAvatar from '@/assets/anon.jpeg'
 import { Plus } from '@element-plus/icons-vue'
