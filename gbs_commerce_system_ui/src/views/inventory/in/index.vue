@@ -90,6 +90,32 @@
 
       <!-- 入库记录表格 -->
       <el-divider>最近入库记录</el-divider>
+      
+      <el-form :inline="true" :model="logSearchForm" class="search-form" style="margin-bottom: 15px">
+        <el-form-item label="商品名称">
+          <el-input
+            v-model="logSearchForm.productName"
+            placeholder="请输入商品名称"
+            clearable
+            style="width: 200px"
+            @clear="handleLogSearch"
+          />
+        </el-form-item>
+        <el-form-item label="操作人">
+          <el-input
+            v-model="logSearchForm.operator"
+            placeholder="请输入操作人"
+            clearable
+            style="width: 150px"
+            @clear="handleLogSearch"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleLogSearch">查询</el-button>
+          <el-button @click="handleLogReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+      
       <el-table
         :data="logList"
         style="width: 100%"
@@ -148,7 +174,11 @@ const currentInventory = ref(null);
 const selectedProduct = ref(null);
 const logList = ref([]);
 
-// 表单数据
+const logSearchForm = reactive({
+  productName: '',
+  operator: ''
+});
+
 const formData = reactive({
   productId: null,
   quantity: 1,
@@ -224,12 +254,19 @@ const handleProductChange = async (productId) => {
 const loadLogList = async () => {
   try {
     loading.value = true;
+    const queryParams = {
+      changeType: 1
+    };
+    if (logSearchForm.productName) {
+      queryParams.productName = logSearchForm.productName;
+    }
+    if (logSearchForm.operator) {
+      queryParams.operator = logSearchForm.operator;
+    }
     const res = await getInventoryLogPage({
       pageNum: pagination.pageNum,
       pageSize: pagination.pageSize,
-      queryParams: {
-        changeType: 1 // 1-入库
-      }
+      queryParams
     });
     if (res.code === 200) {
       logList.value = res.data.records || [];
@@ -266,9 +303,12 @@ const handleSubmit = async () => {
           ElMessage.success('入库成功');
           handleReset();
           loadLogList();
+        } else {
+          ElMessage.error(res.msg || '入库失败');
         }
       } catch (error) {
         console.error('入库失败', error);
+        ElMessage.error(error.response?.data?.msg || error.message || '入库失败');
       } finally {
         submitLoading.value = false;
       }
@@ -304,6 +344,19 @@ const handleSizeChange = (size) => {
 const handleCurrentChange = (page) => {
   pagination.pageNum = page;
   loadLogList();
+};
+
+const handleLogSearch = () => {
+  pagination.pageNum = 1;
+  loadLogList();
+};
+
+const handleLogReset = () => {
+  Object.assign(logSearchForm, {
+    productName: '',
+    operator: ''
+  });
+  handleLogSearch();
 };
 </script>
 

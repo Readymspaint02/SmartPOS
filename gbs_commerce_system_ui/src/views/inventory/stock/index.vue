@@ -19,14 +19,16 @@
             v-model="searchForm.productName"
             placeholder="请输入商品名称"
             clearable
+            style="width: 200px"
             @clear="handleSearch"
           />
         </el-form-item>
         <el-form-item label="是否预警">
           <el-select
             v-model="searchForm.warning"
-            placeholder="请选择"
+            placeholder="请选择是否预警"
             clearable
+            style="width: 150px"
             @clear="handleSearch"
           >
             <el-option label="是" :value="true" />

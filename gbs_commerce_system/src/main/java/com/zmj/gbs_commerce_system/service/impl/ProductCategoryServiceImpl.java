@@ -36,19 +36,30 @@ public class ProductCategoryServiceImpl implements ProductCategoryService {
      */
     @Override
     public List<ProductCategory> getCategoryTree() {
-        // 1. 查询所有分类
         List<ProductCategory> allCategories = categoryMapper.selectList(null);
-
-        // 2. 找出所有顶级分类
         List<ProductCategory> topCategories = allCategories.stream()
                 .filter(category -> category.getParentId() == 0)
                 .collect(Collectors.toList());
-
-        // 3. 递归构建子树
         for (ProductCategory topCategory : topCategories) {
             topCategory.setChildren(getChildren(topCategory.getId(), allCategories));
         }
+        return topCategories;
+    }
 
+    /**
+     * 查询启用的分类树
+     */
+    @Override
+    public List<ProductCategory> getActiveCategoryTree() {
+        QueryWrapper<ProductCategory> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("status", 0);
+        List<ProductCategory> allCategories = categoryMapper.selectList(queryWrapper);
+        List<ProductCategory> topCategories = allCategories.stream()
+                .filter(category -> category.getParentId() == 0)
+                .collect(Collectors.toList());
+        for (ProductCategory topCategory : topCategories) {
+            topCategory.setChildren(getChildren(topCategory.getId(), allCategories));
+        }
         return topCategories;
     }
 

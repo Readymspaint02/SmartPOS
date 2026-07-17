@@ -57,22 +57,27 @@ public class InventoryServiceImpl implements InventoryService {
     public IPage<InventoryVO> getInventoriesWithPagination(Page<Inventory> page, Map<String, Object> queryParams) {
         QueryWrapper<Inventory> queryWrapper = new QueryWrapper<>();
 
-        // 只查询有预警的库存
-        if (queryParams != null && queryParams.containsKey("warning") &&
-                Boolean.TRUE.equals(queryParams.get("warning"))) {
-            queryWrapper.apply("stock_quantity <= warning_quantity");
+        if (queryParams != null) {
+            if (queryParams.containsKey("warning") &&
+                    Boolean.TRUE.equals(queryParams.get("warning"))) {
+                queryWrapper.apply("stock_quantity <= warning_quantity");
+            }
+            
+            if (queryParams.containsKey("productName") && queryParams.get("productName") != null) {
+                String productName = queryParams.get("productName").toString();
+                queryWrapper.exists("SELECT 1 FROM product p WHERE p.id = inventory.product_id AND p.product_name LIKE CONCAT('%', {0}, '%')", productName);
+            }
         }
 
-        // 按更新时间倒序
         queryWrapper.orderByDesc("update_time");
 
         IPage<Inventory> inventoryPage = inventoryMapper.selectPage(page, queryWrapper);
 
-        // 转换为 VO（包含商品信息）
         Page<InventoryVO> voPage = new Page<>(inventoryPage.getCurrent(), inventoryPage.getSize(),
                 inventoryPage.getTotal());
         List<InventoryVO> voList = inventoryPage.getRecords().stream()
                 .map(this::convertToVO)
+                .filter(vo -> vo.getProduct() != null && vo.getProduct().getStatus() == 0)
                 .collect(Collectors.toList());
         voPage.setRecords(voList);
 
@@ -86,9 +91,9 @@ public class InventoryServiceImpl implements InventoryService {
         queryWrapper.orderByAsc("stock_quantity");
         List<Inventory> inventoryList = inventoryMapper.selectList(queryWrapper);
 
-        // 转换为 VO（包含商品信息）
         return inventoryList.stream()
                 .map(this::convertToVO)
+                .filter(vo -> vo.getProduct() != null && vo.getProduct().getStatus() == 0)
                 .collect(Collectors.toList());
     }
 
@@ -209,30 +214,33 @@ public class InventoryServiceImpl implements InventoryService {
             Map<String, Object> queryParams) {
         QueryWrapper<InventoryLog> queryWrapper = new QueryWrapper<>();
 
-        // 按商品ID查询
-        if (queryParams != null && queryParams.containsKey("productId") && queryParams.get("productId") != null) {
-            queryWrapper.eq("product_id", queryParams.get("productId"));
+        if (queryParams != null) {
+            if (queryParams.containsKey("productId") && queryParams.get("productId") != null) {
+                queryWrapper.eq("product_id", queryParams.get("productId"));
+            }
+
+            if (queryParams.containsKey("changeType") && queryParams.get("changeType") != null) {
+                queryWrapper.eq("change_type", queryParams.get("changeType"));
+            }
+
+            if (queryParams.containsKey("operator") && queryParams.get("operator") != null) {
+                queryWrapper.like("operator", queryParams.get("operator"));
+            }
+            
+            if (queryParams.containsKey("productName") && queryParams.get("productName") != null) {
+                String productName = queryParams.get("productName").toString();
+                queryWrapper.exists("SELECT 1 FROM product p WHERE p.id = inventory_log.product_id AND p.product_name LIKE CONCAT('%', {0}, '%')", productName);
+            }
         }
 
-        // 按变动类型查询
-        if (queryParams != null && queryParams.containsKey("changeType") && queryParams.get("changeType") != null) {
-            queryWrapper.eq("change_type", queryParams.get("changeType"));
-        }
-
-        // 按操作人查询
-        if (queryParams != null && queryParams.containsKey("operator") && queryParams.get("operator") != null) {
-            queryWrapper.like("operator", queryParams.get("operator"));
-        }
-
-        // 按时间倒序
         queryWrapper.orderByDesc("create_time");
 
         IPage<InventoryLog> logPage = inventoryLogMapper.selectPage(page, queryWrapper);
 
-        // 转换为 VO（包含商品信息）
         Page<InventoryLogVO> voPage = new Page<>(logPage.getCurrent(), logPage.getSize(), logPage.getTotal());
         List<InventoryLogVO> voList = logPage.getRecords().stream()
                 .map(this::convertLogToVO)
+                .filter(vo -> vo.getProduct() != null)
                 .collect(Collectors.toList());
         voPage.setRecords(voList);
 

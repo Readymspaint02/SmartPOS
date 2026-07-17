@@ -57,6 +57,25 @@ public class ProductCategoryController {
     }
 
     /**
+     * 获取启用的分类树
+     * 只返回status=0的分类
+     * 用于商品搜索和新增商品时的分类选择
+     */
+    @GetMapping("/activeTree")
+    @Operation(summary = "获取启用的分类树")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功")
+    })
+    public Map<String, Object> getActiveCategoryTree() {
+        List<ProductCategory> tree = categoryService.getActiveCategoryTree();
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 200);
+        result.put("msg", "查询成功");
+        result.put("data", tree);
+        return result;
+    }
+
+    /**
      * 获取所有分类列表
      * 返回平铺的列表数据
      */

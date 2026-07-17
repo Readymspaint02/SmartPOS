@@ -227,8 +227,26 @@ public class ProductController {
     })
     public Map<String, Object> addProduct(
             @Parameter(description = "商品信息") @RequestBody Product product) {
-        boolean success = productService.saveProduct(product);
         Map<String, Object> result = new HashMap<>();
+        
+        if (product.getProductCode() != null && !product.getProductCode().isEmpty()) {
+            Product existing = productService.getProductByCode(product.getProductCode());
+            if (existing != null) {
+                result.put("code", 500);
+                result.put("msg", "商品编码已存在，请修改");
+                return result;
+            }
+        }
+        
+        if (product.getCostPrice() != null && product.getPrice() != null) {
+            if (product.getCostPrice().compareTo(product.getPrice()) > 0) {
+                result.put("code", 500);
+                result.put("msg", "成本价不能高于售价");
+                return result;
+            }
+        }
+        
+        boolean success = productService.saveProduct(product);
         if (success) {
             result.put("code", 200);
             result.put("msg", "新增成功");
@@ -253,9 +271,18 @@ public class ProductController {
     })
     public Map<String, Object> updateProduct(@PathVariable Long id,
             @Parameter(description = "商品信息") @RequestBody Product product) {
+        Map<String, Object> result = new HashMap<>();
+        
+        if (product.getCostPrice() != null && product.getPrice() != null) {
+            if (product.getCostPrice().compareTo(product.getPrice()) > 0) {
+                result.put("code", 500);
+                result.put("msg", "成本价不能高于售价");
+                return result;
+            }
+        }
+        
         product.setId(id);
         boolean success = productService.updateProduct(product);
-        Map<String, Object> result = new HashMap<>();
         if (success) {
             result.put("code", 200);
             result.put("msg", "更新成功");

@@ -23,6 +23,14 @@ public interface ProductCategoryService {
     List<ProductCategory> getCategoryTree();
 
     /**
+     * 查询启用的分类树（树形结构）
+     * 只返回status=0的分类
+     * 
+     * @return 启用状态的分类树
+     */
+    List<ProductCategory> getActiveCategoryTree();
+
+    /**
      * 查询所有分类（列表）
      * 
      * @return 分类列表

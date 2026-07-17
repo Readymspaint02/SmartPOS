@@ -13,6 +13,15 @@ export const getCategoryTree = () => {
 };
 
 /**
+ * 获取启用的分类树（只返回status=0的分类）
+ * 用于商品搜索和新增商品时的分类选择
+ * GET /product/category/activeTree
+ */
+export const getActiveCategoryTree = () => {
+    return http.get('/product/category/activeTree');
+};
+
+/**
  * 获取所有分类列表（平铺列表）
  * GET /product/category/list
  */

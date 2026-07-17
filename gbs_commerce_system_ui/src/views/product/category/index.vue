@@ -16,9 +16,25 @@
         </div>
       </template>
 
+      <!-- 搜索区域 -->
+      <el-form :inline="true" :model="searchForm" class="search-form">
+        <el-form-item label="分类名称">
+          <el-input
+            v-model="searchForm.categoryName"
+            placeholder="请输入分类名称"
+            clearable
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">查询</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </el-form-item>
+      </el-form>
+
       <!-- 树形表格 -->
       <el-table
-        :data="categoryTree"
+        :data="filteredCategoryTree"
         style="width: 100%"
         row-key="id"
         border
@@ -128,7 +144,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Plus } from '@element-plus/icons-vue';
 import {
@@ -138,7 +154,6 @@ import {
   deleteCategory
 } from '@/api/modules/productCategory';
 
-// ==================== 数据定义 ====================
 const loading = ref(false);
 const categoryTree = ref([]);
 const categoryTreeSelect = ref([]);
@@ -146,6 +161,27 @@ const dialogVisible = ref(false);
 const dialogTitle = ref('');
 const submitLoading = ref(false);
 const formRef = ref(null);
+
+const searchForm = reactive({
+  categoryName: ''
+});
+
+const filteredCategoryTree = computed(() => {
+  if (!searchForm.categoryName) {
+    return categoryTree.value;
+  }
+  const filterTree = (tree, keyword) => {
+    return tree.reduce((acc, node) => {
+      const matchesKeyword = node.categoryName.toLowerCase().includes(keyword.toLowerCase());
+      const children = node.children ? filterTree(node.children, keyword) : [];
+      if (matchesKeyword || children.length > 0) {
+        acc.push({ ...node, children });
+      }
+      return acc;
+    }, []);
+  };
+  return filterTree(categoryTree.value, searchForm.categoryName);
+});
 
 // 表单数据
 const formData = reactive({
@@ -168,31 +204,22 @@ const rules = {
   ]
 };
 
-// ==================== 权限控制 ====================
 const hasPermission = (permission) => {
-  // 从localStorage获取用户权限列表
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
   const permissions = userInfo.permissions || [];
   return permissions.includes(permission) || permissions.includes('*:*:*');
 };
 
-// ==================== 生命周期 ====================
 onMounted(() => {
   loadCategoryTree();
 });
 
-// ==================== 方法定义 ====================
-
-/**
- * 加载分类树
- */
 const loadCategoryTree = async () => {
   try {
     loading.value = true;
     const res = await getCategoryTree();
     if (res.code === 200) {
       categoryTree.value = res.data || [];
-      // 构建树形选择器数据（添加顶级选项）
       categoryTreeSelect.value = [
         { id: 0, categoryName: '顶级分类', children: res.data || [] }
       ];
@@ -202,6 +229,13 @@ const loadCategoryTree = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const handleSearch = () => {
+};
+
+const handleReset = () => {
+  searchForm.categoryName = '';
 };
 
 /**
@@ -312,6 +346,10 @@ const resetForm = () => {
 .title {
   font-size: 18px;
   font-weight: bold;
+}
+
+.search-form {
+  margin-bottom: 20px;
 }
 
 .box-card {

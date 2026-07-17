@@ -23,36 +23,37 @@ mysql -uroot -p123456;use  gbs_commerce_system_02;
 【已修复】角色管理页面添加角色名称和角色标识搜索框；菜单管理页面添加菜单名称搜索框和菜单类型下拉筛选，支持树形结构过滤查询
 
 【4商品管理】
-1..商品分类管理（https://192.168.3.180:5173/category），商品分类，停用，修复为
-商品管理（https://192.168.3.180:5173/product/list）商品分类搜索框不显示该分类，修复，，新增商品，商品分类，下拉框不显示，停用的分类，选择不了停用的分类，，修复
-2.新增商品，隐藏自动获取图片，换一张 (1/0)，按钮，
-3.商品编码，重复的商品编码给弹窗，提示，而不是报错：系统内部错误: ### Error updating database. Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '123' for key 'product.uniq_product_code' ### The error may exist in com/zmj/gbs_commerce_system/mapper/ProductMapper.java (best guess) ### The error may involve com.zmj.gbs_commerce_system.mapper.ProductMapper.insert-Inline ### The error occurred while setting parameters ### SQL: INSERT INTO product ( product_name, product_code, barcode, category_id, price, cost_price, unit, product_image, description, status, remark ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) ### Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '123' for key 'product.uniq_product_code' ; Duplicate entry '123' for key 'product.uniq_product_code'，
-4.在就是商品删除，是软删除吗？实际上没删除吗？主流方案是这样吗，探讨下，然后，这个就算是软删除，https://192.168.3.180:5173/stock
-
-5.新增商品，修复，不允许成本价，比售价高的填写，修复
-6.商品信息管理，（https://192.168.3.180:5173/product/list），修复，搜索框，加入 按照“状态”进行查询（正常，停用），要查得到商品，，修复
-
-7.修复，商品信息管理,(https://192.168.3.180:5173/product/list),商品名称-输入框,当我输入pachong123start,进行搜索，显示，批量获取图片 批量换一张 (0个商品)
-√批量确定保存 取消,，这些按钮，功能 ；当我输入pachong123stop,进行搜索，隐藏按钮
-
-8.修复，https://192.168.3.180:5173/product/list，当我给输入框：商品名称，输入文字，修复为，不改变“商品名称”的输入框长度，不使得右侧的搜索框（商品编码，请输入商品编码，商品分类，）一起往右侧移动，
-9.https://192.168.3.180:5173/category，商品分类管理，加入分类搜索输入框，有查询功能
+1.【已修复】后端新增getActiveCategoryTree接口只返回启用分类；前端商品列表搜索框和新增商品下拉框调用该接口，不显示停用分类
+2.【已修复】隐藏"自动获取图片"和"换一张"按钮，只保留手动上传功能
+3.【已修复】后端ProductController.addProduct添加商品编码重复校验，返回友好提示"商品编码已存在，请修改"；前端handleSubmit显示错误信息
+4.【已修复】商品删除采用软删除（status=1），这是主流方案，因为有历史订单关联；库存查询已过滤停用商品
+5.【已修复】后端添加成本价校验，前端提交前也校验，成本价高于售价时提示错误
+6.【已修复】商品列表搜索框新增"状态"下拉框（正常/停用），可按状态筛选商品
+7.【已修复】商品名称输入"pachong123start"显示批量按钮，输入"pachong123stop"隐藏批量按钮
+8.【已修复】商品名称输入框设置固定宽度200px，不随内容变化推动右侧搜索框
+9.【已修复】商品分类管理页面添加搜索框，支持按分类名称模糊搜索（前端过滤）
 
 
 
 【5库存管理】
 
-1.https://192.168.3.180:5173/stock，库存查询当我给输入框：商品名称，输入文字，修复为，不改变“商品名称”的输入框长度，不使得右侧的搜索框（商品名称，请输入商品名称，是否预警）一起往右侧移动，
+1.https://192.168.3.180:5173/stock，库存查询当我给输入框：商品名称，输入文字，修复为，不改变"商品名称"的输入框长度，不使得右侧的搜索框（商品名称，请输入商品名称，是否预警）一起往右侧移动，
+【已修复】stock/index.vue商品名称输入框添加固定宽度style="width: 200px"，防止输入时布局偏移
 
 
 2.库存，入库，出库，很有问题，，直接报错：https://192.168.3.180:5173/inventory/in
 https://192.168.3.180:5173/inventory/out，index.vue:293 出库失败 Object(anonymous)	@index.vue:293，弹窗一个红色的X,报错信息不显示，也是500，服务器错误，index.vue:271 入库失败 {msg: null, code: 500}
+【已修复】in/index.vue和out/index.vue：catch块添加ElMessage.error显示错误信息，res.code!=200显示res.msg
 
 
 3.库存查询，修复停用的商品，主流方案，还能查询到该商品吗？给我探讨下，库存查询和库存预警列表，https://192.168.3.180:5173/stock，，，不能显示：商品名称，商品编码都是-，的数据，修复，
+【已修复】InventoryServiceImpl.java：过滤product为null或status!=0的记录；ReportMapper.java：SQL添加AND p.status=0过滤停用商品
 
 4.https://192.168.3.180:5173/stock，前端修复，拉长，看得清：是否预警，这个搜索框，的文字，
+【已修复】stock/index.vue：是否预警下拉框添加style="width: 150px"，placeholder改为"请选择是否预警"
+
 5.商品入库，出库，https://192.168.3.180:5173/stock，库存查询，修复，加入商品入库，出库的搜索框，有搜索查询功能
+【已修复】in/index.vue和out/index.vue：添加logSearchForm(商品名称、操作人)，后端InventoryServiceImpl支持productName搜索库存日志
 
 【6收银管理】
 1.https://192.168.3.180:5173/checkout收银购物车，修复，当查询不存在的商品编码，弹窗：商品不存在或已下架，只显示一个，修复，
