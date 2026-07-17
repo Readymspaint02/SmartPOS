@@ -5,12 +5,17 @@
         <p class="hero-greeting">尊敬的 {{ displayName }}，{{ greeting }}</p>
         
         <p class="hero-subtitle">
-          当前角色：<strong>{{ roleLabel }}</strong>。您可以随时进入智能收银、会员档案、库存看板等常用模块。
+          当前角色：<strong>{{ roleLabel }}</strong>。您可以随时进入{{ availableModuleNames }}等常用模块。
         </p>
         <div class="hero-buttons">
-          <el-button type="primary" @click="openRemote('checkout')">开始收银</el-button>
-          <el-button plain @click="openRemote('member')">会员管理</el-button>
-          <el-button plain @click="openRemote('stock')">库存查询</el-button>
+          <el-button 
+            v-for="btn in availableQuickButtons" 
+            :key="btn.key"
+            :type="btn.type" 
+            @click="openRemote(btn.key)"
+          >
+            {{ btn.label }}
+          </el-button>
         </div>
       </div>
       <div class="hero-right">
@@ -21,8 +26,8 @@
     </el-card>
 
     <el-row :gutter="16" class="quick-grid">
-      <el-col v-for="item in quickEntries" :key="item.title" :xs="24" :md="8">
-        <el-card shadow="hover" class="quick-card" @click="item.action && openRemote(item.action)">
+      <el-col v-for="item in availableQuickEntries" :key="item.title" :xs="24" :md="8">
+        <el-card shadow="hover" class="quick-card" @click="openRemote(item.action)">
           <div class="quick-icon" :style="{ background: item.bg }">
             <el-icon :size="20"><component :is="item.icon" /></el-icon>
           </div>
@@ -90,13 +95,78 @@ import {
 
 const ORIGINAL = window?.ORIGINAL_URL || window?.originalUrl || null
 const baseOrigin = ORIGINAL || window?.location?.origin || ''
+
+const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+const authMenuList = JSON.parse(localStorage.getItem('authMenuList') || '[]')
+
+const getAllPaths = (menuList) => {
+  const paths = []
+  menuList.forEach(item => {
+    if (item.path) paths.push(item.path)
+    if (item.children && item.children.length > 0) {
+      item.children.forEach(child => {
+        if (child.path) paths.push(child.path)
+      })
+    }
+  })
+  return paths
+}
+
+const userPaths = getAllPaths(authMenuList)
+
+const hasPath = (path) => userPaths.includes(path)
+
 const REMOTE_URLS = {
   checkout: '/checkout',
   member: '/member',
   stock: '/stock',
 }
 
-const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+const allQuickButtons = [
+  { key: 'checkout', label: '开始收银', type: 'primary' },
+  { key: 'member', label: '会员管理', type: 'default' },
+  { key: 'stock', label: '库存查询', type: 'default' },
+]
+
+const allQuickEntries = [
+  {
+    title: '智能收银',
+    desc: '快速启动副屏收银流程',
+    action: 'checkout',
+    icon: ShoppingCartFull,
+    bg: 'rgba(64, 158, 255, 0.15)',
+  },
+  {
+    title: '会员档案',
+    desc: '查询积分、余额与活跃度',
+    action: 'member',
+    icon: CollectionTag,
+    bg: 'rgba(103, 194, 58, 0.15)',
+  },
+  {
+    title: '库存看板',
+    desc: '显示库存查询、库存预警',
+    action: 'stock',
+    icon: DataAnalysis,
+    bg: 'rgba(230, 162, 60, 0.15)',
+  },
+]
+
+const availableQuickButtons = computed(() => {
+  return allQuickButtons.filter(btn => hasPath(REMOTE_URLS[btn.key]))
+})
+
+const availableQuickEntries = computed(() => {
+  return allQuickEntries.filter(entry => hasPath(REMOTE_URLS[entry.action]))
+})
+
+const availableModuleNames = computed(() => {
+  const names = availableQuickEntries.value.map(item => item.title)
+  if (names.length === 0) return '相关'
+  if (names.length === 1) return names[0]
+  if (names.length === 2) return names.join('、')
+  return names.slice(0, -1).join('、') + '、' + names[names.length - 1]
+})
 
 const displayName = computed(() => userInfo.nickname || userInfo.username || '管理员')
 const roleLabel = computed(() => {
@@ -124,38 +194,14 @@ const mockStats = {
   stock: 2,
 }
 
-const quickEntries = [
-  {
-    title: '智能收银',
-    desc: '快速启动副屏收银流程',
-    action: 'checkout',
-    icon: ShoppingCartFull,
-    bg: 'rgba(64, 158, 255, 0.15)',
-  },
-  {
-    title: '会员档案',
-    desc: '查询积分、余额与活跃度',
-    action: 'member',
-    icon: CollectionTag,
-    bg: 'rgba(103, 194, 58, 0.15)',
-  },
-  {
-    title: '库存看板',
-    desc: '显示库存查询、库存预警',
-    action: 'stock',
-    icon: DataAnalysis,
-    bg: 'rgba(230, 162, 60, 0.15)',
-  },
-]
-
 const capabilityList = [
   { scene: '会员洞察', title: '精准积分 & 储值', desc: '实时查询会员积分、余额，并联动营销工作流快速响应。' },
   { scene: '语音驱动', title: '语音播报 & 语音指令', desc: '摄像头与语音识别双模态，支持免动手的收银体验。' },
 ]
 
 const guideList = [
-  { title: '如何快速接待会员？', desc: '在副屏上唤醒“会员助手”，即可按手机号或会员号快速查询。' },
-  { title: '想查看今日经营指标？', desc: '进入“报表中心-销售概览”即可获取实时订单、支付与热销榜。' },
+  { title: '如何快速接待会员？', desc: '在副屏上唤醒"会员助手"，即可按手机号或会员号快速查询。' },
+  { title: '想查看今日经营指标？', desc: '进入"报表中心-销售概览"即可获取实时订单、支付与热销榜。' },
 ]
 
 const openRemote = (key) => {
