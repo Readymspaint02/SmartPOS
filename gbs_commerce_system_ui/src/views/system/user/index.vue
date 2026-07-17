@@ -38,9 +38,16 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间"></el-table-column>
-        <el-table-column label="操作" width="200" v-if="isSuperAdmin">
+        <el-table-column label="操作" width="280" v-if="isSuperAdmin">
           <template #default="scope">
             <el-button size="small" @click="handleEdit(scope.row)">编辑</el-button>
+            <el-button 
+              size="small" 
+              :type="scope.row.faceRegistered === 1 ? 'warning' : 'success'"
+              @click="openFaceRegister(scope.row)"
+            >
+              {{ scope.row.faceRegistered === 1 ? '人脸更新' : '人脸注册' }}
+            </el-button>
             <el-button 
               size="small" 
               type="danger" 
@@ -109,21 +116,53 @@
         </span>
       </template>
     </el-dialog>
+
+    <el-dialog :title="faceDialogTitle" v-model="faceDialogVisible" width="480px">
+      <div class="face-register-content">
+        <div class="face-info">
+          <p><strong>用户名：</strong>{{ faceRegisterUser.username }}</p>
+          <p><strong>用户ID：</strong>{{ faceRegisterUser.id }}</p>
+        </div>
+        <div class="face-capture">
+          <video ref="videoRef" autoplay playsinline class="face-video"></video>
+          <canvas ref="canvasRef" style="display: none;"></canvas>
+        </div>
+        <div class="face-preview" v-if="capturedImage">
+          <img :src="capturedImage" alt="人脸预览" class="preview-image" />
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="stopCamera">取消</el-button>
+        <el-button type="primary" @click="captureAndRegister" :loading="faceRegistering">
+          {{ capturedImage ? '确认注册' : '拍照' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted, computed, onBeforeUnmount } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserPage, getCurrentUserInfo, createUser, updateUser, deleteUser } from '@/api/modules/user'
+import { getUserPage, getCurrentUserInfo, createUser, updateUser, deleteUser, checkFaceRegistered, registerFace } from '@/api/modules/user'
 import { getRoleAll } from '@/api/modules/role'
 import defaultAvatar from '@/assets/anon.jpeg'
 import { Plus } from '@element-plus/icons-vue'
-// 用户数据
+import http from '@/api/request'
+
 const userList = ref([])
 const loading = ref(false)
 const currentUser = ref({})
 const roleList=ref([])
+
+const faceDialogVisible = ref(false)
+const faceDialogTitle = ref('人脸注册')
+const faceRegisterUser = ref({})
+const faceRegistering = ref(false)
+const capturedImage = ref('')
+const videoRef = ref(null)
+const canvasRef = ref(null)
+let mediaStream = null
 
 // 分页参数
 const pagination = reactive({
@@ -381,6 +420,99 @@ onMounted(() => {
   loadUserList()
   loadRoleList();
 })
+
+onBeforeUnmount(() => {
+  stopCamera()
+})
+
+const openFaceRegister = async (row) => {
+  faceRegisterUser.value = row
+  capturedImage.value = ''
+  faceDialogVisible.value = true
+  
+  try {
+    const res = await http.get('/face/check', { params: { userId: String(row.id) } })
+    if (res.code === 200 && res.data?.registered) {
+      faceDialogTitle.value = '人脸更新'
+      row.faceRegistered = 1
+    } else {
+      faceDialogTitle.value = '人脸注册'
+      row.faceRegistered = 0
+    }
+  } catch (error) {
+    faceDialogTitle.value = row.faceRegistered === 1 ? '人脸更新' : '人脸注册'
+    console.error('检查人脸状态失败:', error)
+  }
+  
+  await startCamera()
+}
+
+const startCamera = async () => {
+  try {
+    mediaStream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'user', width: 640, height: 480 } 
+    })
+    if (videoRef.value) {
+      videoRef.value.srcObject = mediaStream
+    }
+  } catch (error) {
+    ElMessage.error('无法访问摄像头，请检查权限设置')
+    console.error(error)
+  }
+}
+
+const stopCamera = () => {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(track => track.stop())
+    mediaStream = null
+  }
+  if (videoRef.value) {
+    videoRef.value.srcObject = null
+  }
+  capturedImage.value = ''
+  faceDialogVisible.value = false
+}
+
+const captureAndRegister = async () => {
+  if (!capturedImage.value) {
+    const video = videoRef.value
+    const canvas = canvasRef.value
+    if (!video || !canvas) return
+    
+    canvas.width = video.videoWidth || 640
+    canvas.height = video.videoHeight || 480
+    const ctx = canvas.getContext('2d')
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
+    capturedImage.value = canvas.toDataURL('image/jpeg', 0.8)
+    return
+  }
+  
+  faceRegistering.value = true
+  try {
+    const base64Data = capturedImage.value.split(',')[1]
+    const res = await http.post('/face/register', {
+      userId: String(faceRegisterUser.value.id),
+      image: base64Data,
+      userInfo: faceRegisterUser.value.username
+    })
+    
+    if (res.code === 200) {
+      const msg = faceDialogTitle.value === '人脸更新' ? '人脸更新成功' : '人脸注册成功'
+      ElMessage.success(msg)
+      faceRegisterUser.value.faceRegistered = 1
+      stopCamera()
+      loadUserList()
+    } else {
+      ElMessage.error(res.msg || '人脸注册失败')
+    }
+  } catch (error) {
+    const errMsg = error?.msg || error?.message || '人脸注册失败，请重试'
+    ElMessage.error(errMsg)
+    console.error('人脸注册错误:', error)
+  } finally {
+    faceRegistering.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -417,5 +549,48 @@ onMounted(() => {
   width: 80px;
   height: 80px;
   text-align: center;
+}
+
+.face-register-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.face-info {
+  width: 100%;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 8px;
+}
+
+.face-info p {
+  margin: 4px 0;
+}
+
+.face-capture {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+}
+
+.face-video {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  display: block;
+}
+
+.face-preview {
+  width: 100%;
+  max-width: 400px;
+}
+
+.preview-image {
+  width: 100%;
+  border-radius: 8px;
 }
 </style>

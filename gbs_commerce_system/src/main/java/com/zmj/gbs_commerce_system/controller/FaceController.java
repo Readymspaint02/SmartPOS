@@ -4,9 +4,11 @@ import com.zmj.gbs_commerce_system.annotation.RateLimit;
 import com.zmj.gbs_commerce_system.config.BaiduAiProperties;
 import com.zmj.gbs_commerce_system.dto.FaceRegisterRequest;
 import com.zmj.gbs_commerce_system.entity.Member;
+import com.zmj.gbs_commerce_system.entity.User;
 import com.zmj.gbs_commerce_system.service.FaceAuthService;
 import com.zmj.gbs_commerce_system.service.FaceAuthService.RegisterResult;
 import com.zmj.gbs_commerce_system.service.MemberService;
+import com.zmj.gbs_commerce_system.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,9 @@ public class FaceController {
     
     @Autowired
     private MemberService memberService;
+    
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/config")
     @Operation(summary = "检查百度AI配置")
@@ -77,6 +82,15 @@ public class FaceController {
             if (member != null) {
                 member.setFaceRegistered(1);
                 memberService.updateMember(member);
+            } else {
+                try {
+                    User user = userService.findUserById(Long.valueOf(request.getUserId()));
+                    if (user != null) {
+                        user.setFaceRegistered(1);
+                        userService.updateUserById(user);
+                    }
+                } catch (NumberFormatException ignored) {
+                }
             }
             result.put("code", 200);
             result.put("msg", "人脸注册成功");

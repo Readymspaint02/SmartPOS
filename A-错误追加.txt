@@ -1,0 +1,63 @@
+mysql -uroot -p123456;use  gbs_commerce_system_02;
+
+【1登录：】
+1.https://192.168.3.180:5173/login，修复人脸识别登录，报错：用户不存在或已被禁用,可以参考刷脸支付，https://192.168.3.180:5173/checkout,他能刷脸成功，
+【已修复】修改AuthController.java的faceLogin方法，支持通过用户ID或用户名查找用户；修改request.js移除全局错误弹窗，避免重复弹窗
+2.输入错误密码，修复，弹窗只有一个：用户名或密码错误，人脸登录失败，修复，弹窗只有一个：用户不存在或已被禁用，
+【已修复】移除request.js全局拦截器中的ElMessage.error调用，错误弹窗只在页面组件中显示一次
+3.https://192.168.3.180:5173/user，用户管理增加人脸注册，人脸更新修复，
+【已修复】在用户管理页面添加人脸注册/更新按钮，参考会员管理实现；User实体添加faceRegistered字段；FaceController支持用户人脸注册；数据库sys_user表添加face_registered字段
+
+【2首页】：
+1.错误1：首页（https://192.168.3.180:5173/dashboard），修复为不同角色，首页显示不同的，可点击的模块和介绍，例如：当前角色：系统管理员。您可以随时进入智能收银、会员档案、库存看板等常用模块。，修复为：系统管理员是：当前角色：库存管理员您可以随时进入库存看板等常用模块。，这个具体的常用模块根据左侧的菜单栏，根据角色关联哪些菜单，来动态更新，推荐，修复，
+【3系统管理】
+
+1.https://192.168.3.180:5173/dashboard，左侧菜单，我点击了目录菜单，例如：系统管理，商品管理，修复为当我点击一个目录，其他的目录的子项菜单都收起来，，这个功能能放入【系统管理里面吗？做个按钮？还是说我已有这个按钮功能？】
+2.新增角色，https://192.168.3.180:5173/role，分配权限，修复，将每个菜单都需要我手动选择，修复为当我点击统计报表，他下面的子菜单，例如，销售统计，库存预警，助手图谱，助手图谱访问，自动选中，
+3.https://192.168.3.180:5173/role，角色管理，https://192.168.3.180:5173/menu，菜单管理，加入输入搜索框，修复，
+
+【4商品管理】
+1..商品分类管理（https://192.168.3.180:5173/category），商品分类，停用，修复为
+商品管理（https://192.168.3.180:5173/product/list）商品分类搜索框不显示该分类，修复，，新增商品，商品分类，下拉框不显示，停用的分类，选择不了停用的分类，，修复
+2.新增商品，隐藏自动获取图片，换一张 (1/0)，按钮，
+3.商品编码，重复的商品编码给弹窗，提示，而不是报错：系统内部错误: ### Error updating database. Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '123' for key 'product.uniq_product_code' ### The error may exist in com/zmj/gbs_commerce_system/mapper/ProductMapper.java (best guess) ### The error may involve com.zmj.gbs_commerce_system.mapper.ProductMapper.insert-Inline ### The error occurred while setting parameters ### SQL: INSERT INTO product ( product_name, product_code, barcode, category_id, price, cost_price, unit, product_image, description, status, remark ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? ) ### Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry '123' for key 'product.uniq_product_code' ; Duplicate entry '123' for key 'product.uniq_product_code'，
+4.在就是商品删除，是软删除吗？实际上没删除吗？主流方案是这样吗，探讨下，然后，这个就算是软删除，https://192.168.3.180:5173/stock
+
+5.新增商品，修复，不允许成本价，比售价高的填写，修复
+6.商品信息管理，（https://192.168.3.180:5173/product/list），修复，搜索框，加入 按照“状态”进行查询（正常，停用），要查得到商品，，修复
+
+7.修复，商品信息管理,(https://192.168.3.180:5173/product/list),商品名称-输入框,当我输入pachong123start,进行搜索，显示，批量获取图片 批量换一张 (0个商品)
+√批量确定保存 取消,，这些按钮，功能 ；当我输入pachong123stop,进行搜索，隐藏按钮
+
+8.修复，https://192.168.3.180:5173/product/list，当我给输入框：商品名称，输入文字，修复为，不改变“商品名称”的输入框长度，不使得右侧的搜索框（商品编码，请输入商品编码，商品分类，）一起往右侧移动，
+9.https://192.168.3.180:5173/category，商品分类管理，加入分类搜索输入框，有查询功能
+
+
+
+【5库存管理】
+
+1.https://192.168.3.180:5173/stock，库存查询当我给输入框：商品名称，输入文字，修复为，不改变“商品名称”的输入框长度，不使得右侧的搜索框（商品名称，请输入商品名称，是否预警）一起往右侧移动，
+
+
+2.库存，入库，出库，很有问题，，直接报错：https://192.168.3.180:5173/inventory/in
+https://192.168.3.180:5173/inventory/out，index.vue:293 出库失败 Object(anonymous)	@index.vue:293，弹窗一个红色的X,报错信息不显示，也是500，服务器错误，index.vue:271 入库失败 {msg: null, code: 500}
+
+
+3.库存查询，修复停用的商品，主流方案，还能查询到该商品吗？给我探讨下，库存查询和库存预警列表，https://192.168.3.180:5173/stock，，，不能显示：商品名称，商品编码都是-，的数据，修复，
+
+4.https://192.168.3.180:5173/stock，前端修复，拉长，看得清：是否预警，这个搜索框，的文字，
+5.商品入库，出库，https://192.168.3.180:5173/stock，库存查询，修复，加入商品入库，出库的搜索框，有搜索查询功能
+
+【6收银管理】
+1.https://192.168.3.180:5173/checkout收银购物车，修复，当查询不存在的商品编码，弹窗：商品不存在或已下架，只显示一个，修复，
+
+2.会员识别（可选），查询失败，将两个弹窗（查询会员失败，，会员不存在）修复为：只显示一个弹窗：会员不存在，
+
+
+3.订单管理https://192.168.3.180:5173/cashier/order当我给输入框：订单号，输入文字，修复为，不改变“订单号”的输入框长度，不使得右侧的搜索框（订单状态，支付方式）一起往右侧移动，
+
+
+【7，统计报表】
+1.https://192.168.3.180:5173/alert，库存预警列表，修复，使得不会显示脏数据。例如，商品名称为空白的数据，修复，
+2.https://192.168.3.180:5173/assistant，助手智能图谱沙盘，修复，我输入MB20260110，会员号，生成图谱，报错timeout of 15000ms exceeded，修复，
+

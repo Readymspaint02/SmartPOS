@@ -25,6 +25,7 @@ public class User {
     private Date createTime;
     private Date updateTime;
     private String remark;
+    private Integer faceRegistered;
 
     @TableField(exist = false)
     private List<Role> roles;

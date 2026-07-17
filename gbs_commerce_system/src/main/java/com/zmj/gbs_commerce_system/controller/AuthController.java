@@ -120,15 +120,23 @@ public class AuthController {
     public Map<String, Object> faceLogin(@Valid @RequestBody FaceLoginRequest request) {
         Map<String, Object> result = new HashMap<>();
 
-        Optional<String> matchedUsername = faceAuthService.matchAndGetUsername(request.getImage());
-        if (matchedUsername.isEmpty()) {
+        Optional<String> matchedUserId = faceAuthService.matchAndGetUsername(request.getImage());
+        if (matchedUserId.isEmpty()) {
             businessMetrics.incrementFaceLoginFail();
             result.put("code", 500);
             result.put("msg", "未匹配到注册用户或识别失败");
             return result;
         }
 
-        User user = userService.findByUsername(matchedUsername.get());
+        User user = null;
+        try {
+            user = userService.findUserById(Long.valueOf(matchedUserId.get()));
+        } catch (NumberFormatException e) {
+        }
+        if (user == null) {
+            user = userService.findByUsername(matchedUserId.get());
+        }
+        
         if (user == null || (user.getStatus() != null && user.getStatus() == 1)) {
             businessMetrics.incrementFaceLoginFail();
             result.put("code", 500);
