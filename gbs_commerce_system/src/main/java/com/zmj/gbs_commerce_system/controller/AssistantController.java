@@ -5,6 +5,7 @@ import com.zmj.gbs_commerce_system.mapper.OrdersMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -17,10 +18,7 @@ import java.util.*;
 public class AssistantController {
 
     @Autowired
-    private OrdersMapper ordersMapper;
-
-    @Autowired
-    private OrderItemMapper orderItemMapper;
+    private JdbcTemplate jdbcTemplate;
 
     @GetMapping("/insight")
     @Operation(summary = "获取助手洞察数据")
@@ -58,27 +56,11 @@ public class AssistantController {
                 "ORDER BY quantity DESC " +
                 "LIMIT " + limit;
         
-        List<Map<String, Object>> results = new ArrayList<>();
         try {
-            List<Map<String, Object>> rows = ordersMapper.selectMaps(
-                    new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<>()
-                            .apply(sql)
-            );
-            for (Map<String, Object> row : rows) {
-                Map<String, Object> item = new HashMap<>();
-                item.put("product_name", row.get("product_name"));
-                item.put("quantity", row.get("quantity"));
-                results.add(item);
-            }
+            return jdbcTemplate.queryForList(sql);
         } catch (Exception e) {
-            results = getMockTopProducts();
+            return getMockTopProducts();
         }
-        
-        if (results.isEmpty()) {
-            results = getMockTopProducts();
-        }
-        
-        return results;
     }
 
     private List<Map<String, Object>> getMockTopProducts() {
