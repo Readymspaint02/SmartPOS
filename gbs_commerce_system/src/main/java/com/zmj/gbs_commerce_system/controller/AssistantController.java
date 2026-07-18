@@ -28,7 +28,8 @@ public class AssistantController {
             @RequestParam(defaultValue = "5") Integer limit) {
         
         Map<String, Object> result = new HashMap<>();
-        result.put("status", "success");
+        result.put("code", 200);
+        result.put("msg", "查询成功");
         
         switch (metric) {
             case "top_products":
@@ -38,8 +39,8 @@ public class AssistantController {
                 result.put("data", getSalesTrend(days));
                 break;
             default:
-                result.put("status", "error");
-                result.put("message", "不支持的指标类型: " + metric);
+                result.put("code", 500);
+                result.put("msg", "不支持的指标类型: " + metric);
         }
         
         return result;
