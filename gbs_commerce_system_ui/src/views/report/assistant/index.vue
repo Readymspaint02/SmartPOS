@@ -70,18 +70,18 @@
               <span>标签建议</span>
             </div>
           </template>
-          <div class="tags-container">
+          <div class="tags-cloud">
             <el-empty v-if="!personaTags.length" description="暂无标签，请先生成画像" />
             <template v-else>
-              <el-tag
-                v-for="tag in personaTags"
-                :key="tag"
-                type="success"
-                effect="plain"
-                class="persona-tag"
+              <span
+                v-for="(tag, idx) in personaTags"
+                :key="idx"
+                class="tag-item"
+                :class="tag.size"
+                :style="{ color: tag.color }"
               >
-                {{ tag }}
-              </el-tag>
+                {{ tag.name }}
+              </span>
             </template>
           </div>
         </el-card>
@@ -180,20 +180,23 @@ const loadAssistantCharts = async () => {
 const buildPersonaTags = (member) => {
   const tags = []
   if (member.level?.includes('钻石') || member.level?.includes('铂金')) {
-    tags.push('高价值会员')
+    tags.push({ name: '高价值会员', size: 'large', color: '#e6a23c' })
   }
   if ((member.points || 0) > 3000) {
-    tags.push('高积分')
+    tags.push({ name: '高积分', size: 'medium', color: '#409eff' })
   }
   if ((member.balance || 0) > 1000) {
-    tags.push('高余额')
+    tags.push({ name: '高余额', size: 'medium', color: '#67c23a' })
   }
   if (member.gender === 1) {
-    tags.push('偏好数码/饮料')
+    tags.push({ name: '偏好数码/饮料', size: 'small', color: '#f56c6c' })
   } else if (member.gender === 2) {
-    tags.push('关注生鲜/家清')
+    tags.push({ name: '关注生鲜/家清', size: 'small', color: '#909399' })
   }
-  return tags.length ? tags : ['潜力会员']
+  if (!tags.length) {
+    tags.push({ name: '潜力会员', size: 'medium', color: '#409eff' })
+  }
+  return tags
 }
 
 const buildRadarFromTrend = (trend) => {
@@ -223,15 +226,50 @@ const initCharts = () => {
 const updateBarChart = (categories, values) => {
   if (!barChartInstance) return
   barChartInstance.setOption({
-    tooltip: { trigger: 'axis' },
-    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-    xAxis: { type: 'category', data: categories },
-    yAxis: { type: 'value' },
+    tooltip: { 
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' }
+    },
+    grid: { 
+      left: '12%', 
+      right: '5%', 
+      top: '8%',
+      bottom: '18%',
+      containLabel: true 
+    },
+    xAxis: { 
+      type: 'category', 
+      data: categories,
+      axisLabel: {
+        interval: 0,
+        rotate: 20,
+        fontSize: 11,
+        color: '#333'
+      },
+      axisLine: {
+        lineStyle: { color: '#ddd' }
+      }
+    },
+    yAxis: { 
+      type: 'value',
+      name: '销量',
+      nameTextStyle: { fontSize: 12, color: '#666' },
+      axisLine: { show: false },
+      splitLine: {
+        lineStyle: { type: 'dashed', color: '#eee' }
+      }
+    },
     series: [
       {
         type: 'bar',
-        barWidth: 24,
-        itemStyle: { color: '#5c96ff' },
+        barWidth: '45%',
+        itemStyle: { 
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#5c96ff' },
+            { offset: 1, color: '#83bff6' }
+          ]),
+          borderRadius: [4, 4, 0, 0]
+        },
         data: values
       }
     ]
@@ -244,16 +282,39 @@ const updateRadarChart = (radar) => {
     return
   }
   radarChartInstance.setOption({
-    tooltip: {},
+    tooltip: {
+      trigger: 'item'
+    },
     radar: {
       indicator: radar.indicators,
-      splitNumber: 4
+      splitNumber: 4,
+      radius: '60%',
+      center: ['50%', '55%'],
+      axisName: {
+        color: '#333',
+        fontSize: 11,
+        fontWeight: 'normal'
+      },
+      splitArea: {
+        areaStyle: {
+          color: ['rgba(64, 158, 255, 0.05)', 'rgba(64, 158, 255, 0.1)']
+        }
+      },
+      axisLine: {
+        lineStyle: { color: '#ddd' }
+      },
+      splitLine: {
+        lineStyle: { color: '#eee' }
+      }
     },
     series: [
       {
         type: 'radar',
-        areaStyle: { opacity: 0.2 },
-        lineStyle: { color: '#f56c6c' },
+        areaStyle: { 
+          color: 'rgba(245, 108, 108, 0.25)'
+        },
+        lineStyle: { color: '#f56c6c', width: 2 },
+        itemStyle: { color: '#f56c6c' },
         data: [{ value: radar.values, name: '近 7 天订单数' }]
       }
     ]
@@ -290,8 +351,10 @@ onBeforeUnmount(() => {
 .assistant-visual {
   display: flex;
   flex-direction: column;
+  padding: 20px;
   gap: 16px;
-  height: calc(100vh - 120px);
+  height: calc(100vh - 100px);
+  box-sizing: border-box;
 }
 
 .entry-card {
@@ -307,53 +370,89 @@ onBeforeUnmount(() => {
 
 .charts-container {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 0;
-}
-
-.chart-row {
-  flex: 1;
-  display: flex;
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
   min-height: 0;
 }
 
 .chart-card {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+
+.chart-card :deep(.el-card__header) {
+  padding: 12px 16px;
+  flex-shrink: 0;
 }
 
 .chart-card :deep(.el-card__body) {
   flex: 1;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
 }
 
 .chart-panel {
   flex: 1;
-  min-height: 200px;
+  width: 100%;
+  min-height: 0;
 }
 
-.tags-container {
+.profile-box {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.profile-box p {
+  margin: 10px 0;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.tags-cloud {
   flex: 1;
   display: flex;
   flex-wrap: wrap;
   align-content: center;
   justify-content: center;
+  gap: 12px;
+  padding: 16px;
 }
 
-.profile-box p {
-  margin: 8px 0;
-  font-size: 14px;
+.tag-item {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-weight: 500;
+  background: rgba(0, 0, 0, 0.04);
+  transition: all 0.3s;
 }
 
-.persona-tag {
-  margin: 4px;
-  font-size: 14px;
+.tag-item:hover {
+  transform: scale(1.05);
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.tag-item.large {
+  font-size: 20px;
+  padding: 10px 20px;
+}
+
+.tag-item.medium {
+  font-size: 16px;
   padding: 8px 16px;
+}
+
+.tag-item.small {
+  font-size: 14px;
+  padding: 6px 12px;
 }
 </style>
