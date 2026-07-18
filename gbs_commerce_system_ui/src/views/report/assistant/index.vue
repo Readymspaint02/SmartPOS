@@ -29,9 +29,9 @@
       />
     </el-card>
 
-    <el-row :gutter="16" class="chart-grid">
-      <el-col :span="10">
-        <el-card shadow="hover" class="profile-card">
+    <div class="charts-container">
+      <div class="chart-row">
+        <el-card class="chart-card" shadow="hover">
           <template #header>
             <div class="card-header">
               <span>会员画像</span>
@@ -45,9 +45,7 @@
           </div>
           <el-empty v-else description="请输入会员号后生成画像" />
         </el-card>
-      </el-col>
-      <el-col :span="14">
-        <el-card v-loading="chartLoading">
+        <el-card class="chart-card" v-loading="chartLoading">
           <template #header>
             <div class="card-header">
               <span>热销商品（最近 30 天）</span>
@@ -55,12 +53,10 @@
           </template>
           <div class="chart-panel" ref="barChartRef"></div>
         </el-card>
-      </el-col>
-    </el-row>
+      </div>
 
-    <el-row :gutter="16">
-      <el-col :span="12">
-        <el-card v-loading="chartLoading">
+      <div class="chart-row">
+        <el-card class="chart-card" v-loading="chartLoading">
           <template #header>
             <div class="card-header">
               <span>近 7 天销售雷达</span>
@@ -68,29 +64,29 @@
           </template>
           <div class="chart-panel" ref="radarChartRef"></div>
         </el-card>
-      </el-col>
-      <el-col :span="12">
-        <el-card>
+        <el-card class="chart-card">
           <template #header>
             <div class="card-header">
               <span>标签建议</span>
             </div>
           </template>
-          <el-empty v-if="!personaTags.length" description="暂无标签，请先生成画像" />
-          <template v-else>
-            <el-tag
-              v-for="tag in personaTags"
-              :key="tag"
-              type="success"
-              effect="plain"
-              class="persona-tag"
-            >
-              {{ tag }}
-            </el-tag>
-          </template>
+          <div class="tags-container">
+            <el-empty v-if="!personaTags.length" description="暂无标签，请先生成画像" />
+            <template v-else>
+              <el-tag
+                v-for="tag in personaTags"
+                :key="tag"
+                type="success"
+                effect="plain"
+                class="persona-tag"
+              >
+                {{ tag }}
+              </el-tag>
+            </template>
+          </div>
         </el-card>
-      </el-col>
-    </el-row>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -295,10 +291,12 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: calc(100vh - 120px);
 }
 
 .entry-card {
   border-left: 3px solid #67c23a;
+  flex-shrink: 0;
 }
 
 .card-header {
@@ -307,20 +305,55 @@ onBeforeUnmount(() => {
   align-items: center;
 }
 
-.chart-grid {
-  align-items: stretch;
+.charts-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+}
+
+.chart-row {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  min-height: 0;
+}
+
+.chart-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-card :deep(.el-card__body) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .chart-panel {
-  height: 260px;
+  flex: 1;
+  min-height: 200px;
+}
+
+.tags-container {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
 }
 
 .profile-box p {
-  margin: 6px 0;
+  margin: 8px 0;
+  font-size: 14px;
 }
 
 .persona-tag {
-  margin-right: 8px;
-  margin-bottom: 8px;
+  margin: 4px;
+  font-size: 14px;
+  padding: 8px 16px;
 }
 </style>

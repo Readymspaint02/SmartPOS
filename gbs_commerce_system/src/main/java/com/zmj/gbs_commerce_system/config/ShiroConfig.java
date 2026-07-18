@@ -147,6 +147,9 @@ public class ShiroConfig {
         // 图片爬取接口（无需登录）
         filterChainDefinitionMap.put("/image/**", "anon");
 
+        // Prometheus监控端点（无需登录）
+        filterChainDefinitionMap.put("/actuator/**", "anon");
+
         // ===== 2. 需要JWT认证（登录后即可访问）=====
         // 这些接口只需要登录，不需要特定权限
         // 权限控制在Controller的@RequiresPermissions注解中
@@ -164,6 +167,9 @@ public class ShiroConfig {
 
         // 库存管理
         filterChainDefinitionMap.put("/inventory/**", "jwt");
+
+        // 助手图谱接口
+        filterChainDefinitionMap.put("/assistant/**", "jwt");
 
         // 订单管理
         filterChainDefinitionMap.put("/order/**", "jwt");
