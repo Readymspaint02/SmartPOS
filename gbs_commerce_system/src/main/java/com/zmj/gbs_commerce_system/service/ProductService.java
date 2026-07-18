@@ -49,6 +49,15 @@ public interface ProductService {
     Product getProductByCode(String productCode);
 
     /**
+     * 根据商品编码查询（包含已删除的）
+     * 用于新增商品时检查编码是否重复
+     * 
+     * @param productCode 商品编码
+     * @return 商品信息（包含已软删除的）
+     */
+    Product getProductByCodeIncludeDeleted(String productCode);
+
+    /**
      * 根据条码查询商品
      *
      * @param barcode 商品条码

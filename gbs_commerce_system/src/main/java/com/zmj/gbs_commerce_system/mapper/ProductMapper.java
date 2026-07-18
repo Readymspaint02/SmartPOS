@@ -14,14 +14,18 @@ import org.apache.ibatis.annotations.Select;
 public interface ProductMapper extends BaseMapper<Product> {
 
     /**
-     * 根据商品编码查询商品
+     * 根据商品编码查询商品（只查询正常状态）
      * 用于收银时扫描条形码查询商品
-     * 
-     * @param productCode 商品编码/条形码
-     * @return 商品信息
      */
     @Select("SELECT * FROM product WHERE product_code = #{productCode} AND status = 0")
     Product selectByProductCode(String productCode);
+
+    /**
+     * 根据商品编码查询商品（包含已删除的）
+     * 用于新增商品时检查编码是否重复
+     */
+    @Select("SELECT * FROM product WHERE product_code = #{productCode}")
+    Product selectByProductCodeIncludeDeleted(String productCode);
 
     @Select("SELECT * FROM product WHERE barcode = #{barcode} AND status = 0")
     Product selectByBarcode(String barcode);

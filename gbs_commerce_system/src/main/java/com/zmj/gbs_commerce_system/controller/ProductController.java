@@ -230,10 +230,14 @@ public class ProductController {
         Map<String, Object> result = new HashMap<>();
         
         if (product.getProductCode() != null && !product.getProductCode().isEmpty()) {
-            Product existing = productService.getProductByCode(product.getProductCode());
+            Product existing = productService.getProductByCodeIncludeDeleted(product.getProductCode());
             if (existing != null) {
                 result.put("code", 500);
-                result.put("msg", "商品编码已存在，请修改");
+                if (existing.getStatus() == 1) {
+                    result.put("msg", "商品编码已存在（该商品已被删除，如需恢复请联系管理员）");
+                } else {
+                    result.put("msg", "商品编码已存在，请修改");
+                }
                 return result;
             }
         }

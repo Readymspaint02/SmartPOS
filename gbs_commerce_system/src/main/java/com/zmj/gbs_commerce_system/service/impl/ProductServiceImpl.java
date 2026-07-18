@@ -104,6 +104,11 @@ public class ProductServiceImpl implements ProductService {
         }
         return product;
     }
+    
+    @Override
+    public Product getProductByCodeIncludeDeleted(String productCode) {
+        return productMapper.selectByProductCodeIncludeDeleted(productCode);
+    }
 
     @Override
     public Product getProductByBarcode(String barcode) {
