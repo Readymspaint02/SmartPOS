@@ -421,7 +421,31 @@ const rules = {
     { required: true, message: '请选择商品分类', trigger: 'change' }
   ],
   price: [
-    { required: true, message: '请输入售价', trigger: 'blur' }
+    { required: true, message: '请输入售价', trigger: 'blur' },
+    { 
+      validator: (rule, value, callback) => {
+        if (value === null || value === undefined || value === 0) {
+          callback(new Error('售价不能为0或空'));
+        } else if (value < 0.01) {
+          callback(new Error('售价必须大于0'));
+        } else {
+          callback();
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  costPrice: [
+    { 
+      validator: (rule, value, callback) => {
+        if (value !== null && value !== undefined && value === 0) {
+          callback(new Error('成本价不能为0'));
+        } else {
+          callback();
+        }
+      },
+      trigger: 'blur'
+    }
   ],
   unit: [
     { required: true, message: '请输入单位', trigger: 'blur' }
@@ -622,7 +646,8 @@ const handleSubmit = async () => {
     }
   } catch (error) {
     console.error('提交失败', error);
-    ElMessage.error('商品保存失败，请稍后重试');
+    const errorMsg = error?.response?.data?.msg || error?.msg || '商品保存失败，请稍后重试';
+    ElMessage.error(errorMsg);
   } finally {
     submitLoading.value = false;
   }
