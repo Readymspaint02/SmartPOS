@@ -1,0 +1,164 @@
+# ============================================================
+# 极限压缩版：2核2G 单机部署
+# 6 容器：mysql / redis / backend / frontend / ai-gateway
+# 已砍：Elasticsearch、ai-assistant-service(8900)、Nacos、RabbitMQ、Kibana
+# 说明：RabbitMQ 已移除 → 会员积分改为同步计算（见代码改造）
+# ============================================================
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: gbs-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: gbs_commerce_system_02
+      TZ: Asia/Shanghai
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-buffer-pool-size=128M
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../MYSQL/gbs_commerce_system_02.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ../MYSQL/ai_assistant.sql:/docker-entrypoint-initdb.d/02-ai.sql:ro
+    mem_limit: 512m
+    networks:
+      - gbs-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: gbs-redis
+    restart: always
+    command: redis-server --maxmemory 96mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    mem_limit: 128m
+    networks:
+      - gbs-network
+
+  backend:
+    build:
+      context: ../gbs_commerce_system
+      dockerfile: Dockerfile
+    container_name: gbs-backend
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gbs_commerce_system_02?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      HUAWEI_ASR_AK: ${HUAWEI_ASR_AK:?Set HUAWEI_ASR_AK in .env}
+      HUAWEI_ASR_SK: ${HUAWEI_ASR_SK:?Set HUAWEI_ASR_SK in .env}
+      HUAWEI_ASR_REGION: ${HUAWEI_ASR_REGION:-cn-north-4}
+      HUAWEI_ASR_PROJECT_ID: ${HUAWEI_ASR_PROJECT_ID:?Set HUAWEI_ASR_PROJECT_ID in .env}
+      BAIDU_AI_APP_ID: ${BAIDU_AI_APP_ID:?Set BAIDU_AI_APP_ID in .env}
+      BAIDU_AI_API_KEY: ${BAIDU_AI_API_KEY:?Set BAIDU_AI_API_KEY in .env}
+      BAIDU_AI_SECRET_KEY: ${BAIDU_AI_SECRET_KEY:?Set BAIDU_AI_SECRET_KEY in .env}
+      APP_UPLOAD_DIR: /uploads
+      JAVA_TOOL_OPTIONS: "-Xmx384m -Xms128m -XX:+UseSerialGC"
+    ports:
+      - "8081:8081"
+    volumes:
+      - uploads:/uploads
+    mem_limit: 512m
+    networks:
+      - gbs-network
+
+  frontend:
+    build:
+      context: ../gbs_commerce_system_ui
+      dockerfile: Dockerfile
+    container_name: gbs-frontend
+    restart: always
+    depends_on:
+      - backend
+    # 不再对外暴露 80，由 nginx-main 统一入口分发
+    # ports:
+    #   - "80:80"
+    expose:
+      - "80"
+    mem_limit: 64m
+    networks:
+      - gbs-network
+
+  # ============================================================
+  # 主入口 nginx：按子域名分发多站点（示例域名，按需替换）
+  #   pos.example.com   -> frontend(收银) / backend(REST+WS)
+  #   campus.example.com -> 静态站点
+  #   art.example.com   -> 静态站点
+  #   inn.example.com   -> 静态站点
+  # ============================================================
+  nginx-main:
+    image: nginx:alpine
+    container_name: gbs-nginx-main
+    restart: always
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+      # SSL 证书就绪后放开 443 并挂载证书卷
+      # - "443:443"
+    volumes:
+      - ./nginx-main.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./sites/home:/var/www/home:ro
+      - ./sites/campus:/var/www/campus:ro
+      - ./sites/art:/var/www/art:ro
+      - ./sites/inn:/var/www/inn:ro
+      # SSL 证书（就绪后建 ssl/ 目录放 fullchain.pem + privkey.pem）
+      # - ./ssl:/etc/nginx/ssl:ro
+    mem_limit: 64m
+    networks:
+      - gbs-network
+
+  # Python 智能体网关：Agent(9000) + TTS(8101) 同一容器
+  ai-gateway:
+    build:
+      context: ../gbs_commerce_system_ui/mcp_server
+      dockerfile: Dockerfile.lite
+    container_name: gbs-ai-gateway
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?Set DEEPSEEK_API_KEY in .env}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: gbs_commerce_system_02
+      BAIDU_TTS_APP_ID: ${BAIDU_TTS_APP_ID:?Set BAIDU_TTS_APP_ID in .env}
+      BAIDU_TTS_API_KEY: ${BAIDU_TTS_API_KEY:?Set BAIDU_TTS_API_KEY in .env}
+      BAIDU_TTS_SECRET_KEY: ${BAIDU_TTS_SECRET_KEY:?Set BAIDU_TTS_SECRET_KEY in .env}
+    # 不再对外暴露，统一走 nginx-main 反代 /agent -> 9000, /tts -> 8101
+    # ports:
+    #   - "9000:9000"
+    #   - "8101:8101"
+    expose:
+      - "9000"
+      - "8101"
+    mem_limit: 256m
+    networks:
+      - gbs-network
+
+volumes:
+  mysql_data:
+  redis_data:
+  uploads:
+
+networks:
+  gbs-network:
+    driver: bridge

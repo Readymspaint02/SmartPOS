@@ -1,0 +1,26 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# 时区与基础库
+ENV TZ=Asia/Shanghai
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
+    && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone \
+    && rm -rf /var/lib/apt/lists/*
+
+# 依赖（含 redis/httpx/fastapi/uvicorn，会话记忆用）
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
+
+# 只拷贝网关运行所需文件（Agent + TTS + 数据库访问）
+COPY Agent_HTTP_Proxy.py .
+COPY TTS_HTTP_Proxy.py .
+COPY repositories.py .
+COPY db_utils.py .
+
+# 启动脚本（同一容器跑 Agent:9000 + TTS:8101）
+COPY start_lite.sh .
+RUN chmod +x start_lite.sh
+
+EXPOSE 9000 8101
+CMD ["./start_lite.sh"]
