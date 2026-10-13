@@ -125,7 +125,7 @@ docker-compose up -d --build
 
 ## 在线体验
 
-- 演示地址：https://ryo.jufu.vip
+- 演示地址：https://pos.a.nxxglj.cn
 - GitHub：https://github.com/Readymspaint02/supermarket-cashier
 ## 单元测试
 
