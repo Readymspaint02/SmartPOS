@@ -61,6 +61,7 @@ data/
 *.md
 !README.md
 !DEPLOY.md
+!docs/notes/*.md
 
 # 配置文件中的硬编码敏感信息
 application-local.yml
