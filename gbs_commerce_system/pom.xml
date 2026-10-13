@@ -120,12 +120,7 @@
             </exclusions>
         </dependency>
 
-        <!-- 显式引入带 jakarta 分类器的核心模块 -->
-        <dependency>
-            <groupId>org.apache.shiro</groupId>
-            <artifactId>shiro-spring</artifactId>
-            <classifier>jakarta</classifier>  <!-- 关键：添加 jakarta 分类器 -->
-            <version>1.13.0</version>
+       
             <exclusions>
                 <!-- 排除掉默认的（不带分类器的）依赖，避免冲突 -->
                 <exclusion>
