@@ -42,12 +42,12 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
 
     - name: Install & Build
       working-directory: gbs_commerce_system_ui
       run: |
-        npm install
+        npm install --no-audit --no-fund
         npm run build
 
     - name: Upload frontend artifact
