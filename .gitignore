@@ -23,6 +23,13 @@ __pycache__/
 *.war
 *.nar
 
+# 华为云 SIS SDK 依赖（本地仓库无此 artifact，需随仓库分发）
+!huaweicloud-java-sdk-sis-1.8.7/
+huaweicloud-java-sdk-sis-1.8.7/*
+!huaweicloud-java-sdk-sis-1.8.7/jar/
+huaweicloud-java-sdk-sis-1.8.7/jar/*
+!huaweicloud-java-sdk-sis-1.8.7/jar/*.jar
+
 # 日志
 *.log
 logs/

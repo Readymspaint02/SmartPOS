@@ -240,20 +240,16 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
         </dependency>
 
-        <!-- Huawei ASR SDK -->
+        <!-- Huawei ASR SDK（Maven Central 无此 artifact，随仓库 huaweicloud-java-sdk-sis-1.8.7/ 分发；构建前需先 mvn install:install-file 安装到本地仓库） -->
         <dependency>
             <groupId>com.huawei.sis</groupId>
             <artifactId>huaweicloud-java-sdk-sis</artifactId>
             <version>1.8.7</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/../huaweicloud-java-sdk-sis-1.8.7/jar/huaweicloud-java-sdk-sis-1.8.7.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.huawei</groupId>
             <artifactId>java-sdk-core</artifactId>
             <version>3.0.12</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/../huaweicloud-java-sdk-sis-1.8.7/jar/java-sdk-core-3.0.12.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
