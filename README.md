@@ -4,6 +4,22 @@
 
 > 本仓库包含应用代码和开发/部署配置。运行前请自行准备数据库、Redis、RabbitMQ 及所需的第三方服务凭据。不要提交真实密钥、证书、生产数据或个人资料。
 
+## 📌 版本演进
+
+| 版本 | 分支 | 说明 |
+|------|------|------|
+| v0.1.x | [`legacy-v0.1`](../../tree/legacy-v0.1) | 中软杯参赛版历史（原 supermarket-cashier 仓库，保留完整提交历史） |
+| v0.2.x+ | [`main`](../../tree/main) | 当前主版本，持续迭代 |
+
+> **v0.2 在 v0.1 基础上持续演进：**
+> - 全面工程化重构，认证升级为 **Shiro + JWT 无状态**
+> - **RabbitMQ 异步化**（会员积分异步计算）+ **Redis + Redisson + 乐观锁防超卖**
+> - 支付宝当面付沙箱 **验签 + 分布式锁防回调重入**
+> - MCP/AI 多智能体（Agent / TTS / ASR / 会员订单查询）
+> - Docker Compose 一键部署
+
+> 📦 旧版仓库已归档：[supermarket-cashier](https://github.com/Readymspaint02/supermarket-cashier)（历史版本，只读）
+
 ## 项目组成
 
 | 模块 | 说明 | 主要技术 |
