@@ -25,6 +25,9 @@ export const initDynamicRouter = async () => {
     }
 
     const convertToRoute = (item) => {
+      if (item.visible === 1) {
+        return null;
+      }
       const routeItem = {
         name: item.path.replace(/\//g, '_') || `route_${item.id}`,
         path: item.path,
@@ -42,7 +45,7 @@ export const initDynamicRouter = async () => {
       }
 
       if (item.children && item.children.length > 0) {
-        routeItem.children = item.children.map(convertToRoute);
+        routeItem.children = item.children.map(convertToRoute).filter(Boolean);
       }
 
       return routeItem;
@@ -50,7 +53,7 @@ export const initDynamicRouter = async () => {
 
     authMenuList.forEach(item => {
       const routeItem = convertToRoute(item);
-      if (routeItem.component || (routeItem.children && routeItem.children.length > 0)) {
+      if (routeItem && (routeItem.component || (routeItem.children && routeItem.children.length > 0))) {
         router.addRoute("layout", routeItem);
       }
     });

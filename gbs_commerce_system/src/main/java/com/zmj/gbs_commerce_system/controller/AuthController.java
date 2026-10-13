@@ -1,9 +1,11 @@
 package com.zmj.gbs_commerce_system.controller;
 
 import com.zmj.gbs_commerce_system.annotation.RateLimit;
+import com.zmj.gbs_commerce_system.entity.Role;
 import com.zmj.gbs_commerce_system.entity.User;
 import com.zmj.gbs_commerce_system.metrics.BusinessMetrics;
 import com.zmj.gbs_commerce_system.service.FaceAuthService;
+import com.zmj.gbs_commerce_system.service.RoleService;
 import com.zmj.gbs_commerce_system.service.TokenBlacklistService;
 import com.zmj.gbs_commerce_system.service.UserService;
 import com.zmj.gbs_commerce_system.utils.JwtUtils;
@@ -26,9 +28,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -42,6 +46,9 @@ public class AuthController {
     private UserService userService;
 
     @Autowired
+    private RoleService roleService;
+
+    @Autowired
     private FaceAuthService faceAuthService;
 
     @Autowired
@@ -49,6 +56,43 @@ public class AuthController {
 
     @Autowired
     private BusinessMetrics businessMetrics;
+
+    @GetMapping("/roles")
+    @Operation(summary = "获取可登录角色列表（登录页下拉框用）")
+    public Map<String, Object> listRoles() {
+        List<Role> roles = roleService.findAllRoles();
+        if (roles != null) {
+            roles.removeIf(r -> r.getStatus() != null && r.getStatus() == 1);
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 200);
+        result.put("data", roles);
+        return result;
+    }
+
+    /**
+     * 混合登录方案：输入账号后自动带出该账号拥有的可用角色。
+     * 仅返回角色信息（roleKey/roleName），不泄露密码等敏感字段。
+     * 账号不存在或无角色时返回空列表，下拉框显示提示。
+     * 注意：该接口按用户名查询角色，存在轻微用户名存在性泄露，仅适用于内网收银系统。
+     */
+    @GetMapping("/userRoles")
+    @Operation(summary = "根据用户名带出该账号拥有的可用角色（登录页混合方案）")
+    public Map<String, Object> listRolesByUsername(@RequestParam String username) {
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 200);
+        if (username == null || username.trim().isEmpty()) {
+            result.put("data", List.of());
+            return result;
+        }
+        User user = userService.findByUsername(username.trim());
+        List<Role> roles = new java.util.ArrayList<>(
+                (user != null && user.getRoles() != null) ? user.getRoles() : List.of());
+        // 过滤掉已禁用的角色
+        roles.removeIf(r -> r.getStatus() != null && r.getStatus() == 1);
+        result.put("data", roles);
+        return result;
+    }
 
     @PostMapping("/login")
     @ApiResponses(value = {
@@ -67,6 +111,21 @@ public class AuthController {
         try {
             subject.login(token);
             User user = (User) subject.getPrincipal();
+
+            // 选择指定角色登录时，校验账号是否拥有该角色
+            if (request.getRoleKey() != null && !request.getRoleKey().isEmpty()) {
+                boolean hasRole = user.getRoles() != null && user.getRoles().stream()
+                        .anyMatch(r -> request.getRoleKey().equals(r.getRoleKey()));
+                if (!hasRole) {
+                    subject.logout();
+                    businessMetrics.incrementLoginFail();
+                    Map<String, Object> denied = new HashMap<>();
+                    denied.put("code", 500);
+                    denied.put("msg", "该账号不属于所选角色，请确认后重试");
+                    return denied;
+                }
+            }
+
             String jwtToken = JwtUtils.generateToken(user.getId(), user.getUsername());
 
             businessMetrics.incrementLoginSuccess();
@@ -181,6 +240,9 @@ public class AuthController {
         @Schema(description = "密码", example = "admin123")
         private String password;
 
+        @Schema(description = "登录角色roleKey（可选，指定后校验账号是否拥有该角色）")
+        private String roleKey;
+
         public String getUsername() {
             return username;
         }
@@ -195,6 +257,14 @@ public class AuthController {
 
         public void setPassword(String password) {
             this.password = password;
+        }
+
+        public String getRoleKey() {
+            return roleKey;
+        }
+
+        public void setRoleKey(String roleKey) {
+            this.roleKey = roleKey;
         }
     }
 

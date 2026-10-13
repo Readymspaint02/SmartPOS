@@ -113,6 +113,9 @@ public class JwtFilter extends AccessControlFilter {
             if (requestURI.endsWith("/auth/login") ||           // 登录接口
                     requestURI.endsWith("/auth/faceLogin") ||    // 人脸登录
                     requestURI.endsWith("/auth/register")||      // 注册接口
+                    requestURI.endsWith("/auth/roles") ||        // 登录页角色下拉框（公开）
+                    requestURI.endsWith("/auth/userRoles") ||    // 混合方案：按账号带出角色（公开）
+                    requestURI.endsWith("/asr/stream")||         // ASR 语音识别 WebSocket 代理端点（浏览器无法在 WS 握手时携带自定义鉴权头，需匿名放行）
                     requestURI.contains("/uploads/")||           // 上传的静态资源
                     requestURI.contains("/swagger-ui") ||        // Swagger文档
                     requestURI.contains("/v3/api-docs") ||
@@ -120,7 +123,8 @@ public class JwtFilter extends AccessControlFilter {
                     requestURI.contains("/webjars") ||
                     requestURI.endsWith("/doc.html") ||
                     requestURI.contains("/image/") ||            // 图片搜索接口
-                    requestURI.contains("/public/")) {           // 公开接口
+                    requestURI.contains("/public/") ||           // 公开接口
+                    requestURI.contains("/actuator/")) {         // Prometheus监控端点
                 return true; // 匿名接口直接放行
             }
         }

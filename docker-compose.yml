@@ -43,7 +43,7 @@
 # 
 # - Q5：环境变量${VAR:-default}是什么意思？
 #   A5：从.env文件读取环境变量VAR，如果不存在则使用默认值default。
-#       例如：${MYSQL_ROOT_PASSWORD:-123456}
+#       例如：${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
 # 
 # - Q6：端口映射"3306:3306"是什么意思？
 #   A6：宿主机端口:容器端口。访问宿主机3306端口，会转发到容器3306端口。
@@ -70,7 +70,7 @@ services:
     container_name: gbs-mysql           # 容器名称
     restart: always                     # 自动重启策略
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}  # root密码
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}  # root密码
       MYSQL_DATABASE: gbs_commerce_system_02               # 初始化数据库
       TZ: Asia/Shanghai                                      # 时区
     ports:
@@ -104,8 +104,8 @@ services:
     container_name: gbs-rabbitmq
     restart: always
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}      # 用户名
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}  # 密码
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:?Set RABBITMQ_USER in .env}      # 用户名
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}  # 密码
     ports:
       - "5672:5672"                     # AMQP端口
       - "15672:15672"                   # Web管理界面端口
@@ -129,15 +129,15 @@ services:
       # 数据库配置（通过服务名访问）
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gbs_commerce_system_02?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8
       SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       # Redis配置
       REDIS_HOST: redis                 # 服务名
       REDIS_PORT: 6379
       # RabbitMQ配置
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      RABBITMQ_USERNAME: ${RABBITMQ_USER:-guest}
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_USERNAME: ${RABBITMQ_USER:?Set RABBITMQ_USER in .env}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?Set RABBITMQ_PASSWORD in .env}
       # 华为ASR配置
       HUAWEI_ASR_AK: ${HUAWEI_ASR_AK}
       HUAWEI_ASR_SK: ${HUAWEI_ASR_SK}
@@ -179,7 +179,7 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USER: root
-      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       DB_NAME: gbs_commerce_system_02
       BAIDU_TTS_APP_ID: ${BAIDU_TTS_APP_ID}
       BAIDU_TTS_API_KEY: ${BAIDU_TTS_API_KEY}

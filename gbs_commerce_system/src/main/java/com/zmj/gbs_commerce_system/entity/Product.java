@@ -87,6 +87,12 @@ public class Product {
      * 0-正常，1-下架
      */
     private Integer status;
+
+    /**
+     * 销量统计
+     * 用于推荐商品排序
+     */
+    private Integer salesCount;
     
     /**
      * 创建者

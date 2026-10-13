@@ -1,0 +1,53 @@
+server:
+  port: 8900
+
+spring:
+  application:
+    name: ai-assistant-service
+  # Nacos 配置（可选）：本地没有 Nacos 也能启动，system-prompt 等动态配置走本地默认值
+  config:
+    import: optional:nacos:ai-assistant.yml
+  # 跳过 Spring Cloud 与 Boot 3.4 的联动兼容性校验（Nacos client SDK 运行时仍兼容）
+  cloud:
+    # Nacos 客户端读取配置的编码：必须显式 UTF-8，否则含中文/特殊符号的 yml
+    # 会报 MalformedInputException 导致 Nacos 配置解析失败、降级用本地默认值
+    nacos:
+      config:
+        encode: UTF-8
+    compatibility-verifier:
+      enabled: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/gbs_commerce_system_02?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
+  elasticsearch:
+    uris: ${ES_URIS:http://localhost:9200}
+
+spring.ai:
+  openai:
+    api-key: ${DEEPSEEK_API_KEY:sk-replace-in-nacos}
+    base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
+    chat:
+      options:
+        model: ${DEEPSEEK_MODEL:deepseek-chat}
+        temperature: 0.3
+
+# ============ AI 助手配置（可被 Nacos 覆盖，动态刷新） ============
+ai:
+  # 系统提示词（Nacos: ai-assistant.yml 中 ai.system-prompt 可在线修改）
+  system-prompt: ${AI_SYSTEM_PROMPT:你是「智慧收银系统 SmartPOS」的AI助手，服务超市收银员/店长/会员。回答用中文纯文本，不使用markdown和emoji；金额用¥两位小数；涉敏感操作只说明不虚构。}
+  # 会话记忆存储策略：redis（默认，主）| mysql（可切换）
+  memory-storage: ${AI_MEMORY_STORAGE:redis}
+  # 向量库策略：elasticsearch（默认）| redis（Redis Stack，阶段4接入）
+  vector-provider: ${AI_VECTOR_PROVIDER:elasticsearch}
+  # 会话标题生成提示词
+  title-prompt: ${AI_TITLE_PROMPT:根据以下用户提问生成一个不超过15字的简短会话标题，直接输出标题本身，不要引号和多余说明：}
+
+logging:
+  level:
+    com.zmj.ai: debug

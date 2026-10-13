@@ -3,7 +3,7 @@ import router from '@/router/index';
 import { ElMessage } from 'element-plus';
 
 const http = axios.create({
-    baseURL: '/api',
+    baseURL: '/shop/api',
 });
 // 添加请求拦截器
 http.interceptors.request.use(function (config) {

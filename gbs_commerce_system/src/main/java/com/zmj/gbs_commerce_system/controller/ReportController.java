@@ -38,6 +38,13 @@ public class ReportController {
     }
 
     @RequiresPermissions("report:sales:view")
+    @GetMapping("/sales/today")
+    @Operation(summary = "今日销售概览")
+    public Map<String, Object> todaySalesOverview() {
+        return success(reportService.getTodaySalesOverview());
+    }
+
+    @RequiresPermissions("report:sales:view")
     @GetMapping("/sales/trend")
     @Operation(summary = "销售趋势（最近7天）")
     public Map<String, Object> salesTrend(
@@ -46,10 +53,23 @@ public class ReportController {
         return success(data);
     }
 
-    @RequiresPermissions("report:inventory:alert")
+    @RequiresPermissions("report:sales:view")
+    @GetMapping("/sales/recentOrders")
+    @Operation(summary = "最近订单")
+    public Map<String, Object> recentOrders(
+            @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit) {
+        return success(reportService.getRecentOrders(limit == null ? 10 : limit));
+    }
+
     @GetMapping("/inventory/warning")
     @Operation(summary = "库存预警列表")
     public Map<String, Object> inventoryWarning() {
         return success(reportService.getInventoryWarnings());
+    }
+
+    @GetMapping("/inventory/stats")
+    @Operation(summary = "库存统计")
+    public Map<String, Object> inventoryStats() {
+        return success(reportService.getInventoryStats());
     }
 }

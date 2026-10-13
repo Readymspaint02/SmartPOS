@@ -1,0 +1,329 @@
+/* ============================================================================
+ * 智慧收银系统 SmartPOS · 全局主题层
+ * 与登录页一致的靛青/青色科技渐变体系
+ * ============================================================================ */
+
+:root {
+  /* —— 品牌主色 —— */
+  --pos-primary: #4F46E5;
+  --pos-primary-soft: #6366F1;
+  --pos-accent: #06B6D4;
+  --pos-purple: #A855F7;
+
+  /* —— 暗色表面（侧栏/顶栏）—— */
+  --pos-surface-900: #0F172A;
+  --pos-surface-800: #1E1B4B;
+  --pos-surface-700: #312E81;
+
+  /* —— 文字 —— */
+  --pos-text: #0F172A;
+  --pos-text-soft: #475569;
+  --pos-text-muted: #94A3B8;
+
+  /* —— 背景与边框 —— */
+  --pos-bg: #F1F5F9;
+  --pos-card-bg: #FFFFFF;
+  --pos-border: #E2E8F0;
+
+  /* —— 渐变 —— */
+  --pos-gradient-brand: linear-gradient(135deg, #4F46E5 0%, #6366F1 50%, #06B6D4 100%);
+  --pos-gradient-dark: linear-gradient(160deg, #0F172A 0%, #1E1B4B 55%, #312E81 100%);
+  --pos-gradient-accent: linear-gradient(135deg, #06B6D4 0%, #4F46E5 100%);
+
+  /* —— 阴影 —— */
+  --pos-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04);
+  --pos-shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --pos-shadow-glow: 0 8px 24px rgba(79, 70, 229, 0.25);
+
+  /* —— 圆角 —— */
+  --pos-radius: 14px;
+}
+
+/* ----------- 覆盖 Element Plus 主色为品牌靛青 ----------- */
+:root {
+  --el-color-primary: #4F46E5;
+  --el-color-primary-light-3: #6366F1;
+  --el-color-primary-light-5: #818CF8;
+  --el-color-primary-light-7: #A5B4FC;
+  --el-color-primary-light-8: #C7D2FE;
+  --el-color-primary-light-9: #EEF2FF;
+  --el-color-primary-dark-2: #4338CA;
+  --el-border-radius-base: 10px;
+  --el-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+/* ----------- 全局基础 ----------- */
+body {
+  background: var(--pos-bg);
+  color: var(--pos-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 滚动条统一 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.25); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(79, 70, 229, 0.4); }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ============================================================================
+ * Element Plus 组件层美化 —— 让所有页面自动继承"智能"质感
+ * ============================================================================ */
+
+/* —— 卡片：玻璃质感、柔阴影、统一圆角 —— */
+.el-card {
+  border: 1px solid var(--pos-border) !important;
+  border-radius: var(--pos-radius) !important;
+  box-shadow: var(--pos-shadow-sm) !important;
+  background: var(--pos-card-bg) !important;
+  transition: box-shadow 0.25s ease, transform 0.25s ease !important;
+}
+.el-card:hover {
+  box-shadow: var(--pos-shadow-md) !important;
+}
+.el-card__header {
+  border-bottom: 1px solid var(--pos-border) !important;
+  font-weight: 600;
+  color: var(--pos-text);
+}
+
+/* —— 按钮：主按钮渐变 —— */
+.el-button--primary {
+  background: var(--pos-gradient-brand) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.28);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+.el-button--primary:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.38);
+}
+.el-button--primary:active { transform: translateY(0); }
+
+/* —— 表格：悬浮行渐变、表头渐变 —— */
+.el-table {
+  --el-table-header-bg-color: #F8FAFC;
+  --el-table-border-color: var(--pos-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.el-table th.el-table__cell {
+  font-weight: 600;
+  color: var(--pos-text);
+  background: linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%) !important;
+}
+.el-table__row:hover > td.el-table__cell {
+  background: linear-gradient(90deg, rgba(79,70,229,0.04), rgba(6,182,212,0.04)) !important;
+}
+
+/* —— 输入框聚焦光环 —— */
+.el-input__wrapper.is-focus,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.18) !important;
+}
+
+/* —— 标签/统计/分页配色 —— */
+.el-tag--primary { background: rgba(79,70,229,0.10); color: var(--pos-primary); border-color: transparent; }
+.el-statistic__number { color: var(--pos-primary); font-weight: 700; }
+
+/* —— 对话框：圆角、顶部彩条 —— */
+.el-dialog {
+  border-radius: var(--pos-radius) !important;
+  overflow: hidden;
+}
+.el-dialog__header {
+  background: linear-gradient(90deg, rgba(79,70,229,0.06), rgba(6,182,212,0.04));
+}
+
+/* —— 菜单激活态发光（用于侧栏）—— */
+.el-menu-item.is-active {
+  background: linear-gradient(90deg, rgba(79,70,229,0.35), rgba(6,182,212,0.18)) !important;
+  box-shadow: inset 3px 0 0 0 var(--pos-accent);
+}
+
+/* ============================================================================
+ * 可复用智能样式工具类
+ * ============================================================================ */
+
+/* 玻璃卡片 */
+.pos-glass {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: var(--pos-shadow-md);
+  border-radius: var(--pos-radius);
+}
+
+/* 智能徽标 */
+.pos-ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #fff;
+  background: var(--pos-gradient-brand);
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+}
+.pos-ai-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 6px #fff;
+  animation: pos-ai-pulse 1.6s ease-in-out infinite;
+}
+@keyframes pos-ai-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.75); }
+}
+
+/* 渐变文字 */
+.pos-gradient-text {
+  background: var(--pos-gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* 渐变图标圆 */
+.pos-icon-orb {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pos-gradient-brand);
+  color: #fff;
+  border-radius: 12px;
+  box-shadow: var(--pos-shadow-glow);
+}
+
+/* 智能洞察卡 */
+.pos-insight {
+  position: relative;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(79,70,229,0.06), rgba(6,182,212,0.06));
+  border: 1px solid rgba(79,70,229,0.14);
+  color: var(--pos-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.65;
+}
+
+/* 数字滚动计数器 */
+.pos-counter {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* ============================================================================
+ * 全局页面级智能样式 —— 让所有详情页自动继承"智慧"质感
+ * ============================================================================ */
+
+/* —— 主内容区背景留白与间距 —— */
+.layout-main {
+  background: var(--pos-bg) !important;
+}
+
+/* —— 卡片头部：统一标题样式/留白 —— */
+.el-card__header {
+  padding: 16px 20px !important;
+}
+.el-card__body {
+  padding: 18px 20px !important;
+}
+.card-header .title,
+.card-header .card-title,
+.el-card__header > .card-header > span:first-child {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pos-text);
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* —— 内联搜索表单：柔和背景区 —— */
+.demo-form-inline,
+.search-form,
+.el-form--inline {
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  background: linear-gradient(135deg, rgba(79,70,229,0.04), rgba(6,182,212,0.04));
+  border: 1px solid rgba(79,70,229,0.10);
+  border-radius: 12px;
+}
+.el-form--inline .el-form-item { margin-bottom: 12px; }
+.el-form--inline .el-form-item__label { color: var(--pos-text-soft); font-weight: 500; }
+.el-form--inline :deep(.el-input__wrapper),
+.el-form--inline .el-input__wrapper,
+.el-form--inline .el-select .el-input__wrapper {
+  background: #fff;
+  border-radius: 8px;
+}
+
+/* —— 表格：圆润、舒适行高、金额高亮 —— */
+.el-table {
+  border-radius: 12px !important;
+}
+.el-table th.el-table__cell {
+  padding: 12px 0;
+  font-size: 13px;
+}
+.el-table td.el-table__cell {
+  padding: 11px 0;
+}
+.el-table .amount {
+  color: var(--pos-primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* —— 状态标签：语义化配色 —— */
+.el-tag--success { background: rgba(16,185,129,0.12); color: #047857; border-color: transparent; }
+.el-tag--warning { background: rgba(245,158,11,0.14); color: #B45309; border-color: transparent; }
+.el-tag--danger  { background: rgba(244,63,94,0.12); color: #BE123C; border-color: transparent; }
+.el-tag--info    { background: rgba(100,116,139,0.14); color: #334155; border-color: transparent; }
+
+/* —— 分页：右对齐与留白 —— */
+.el-pagination {
+  justify-content: flex-end;
+  margin-top: 18px;
+  padding-top: 4px;
+}
+
+/* —— 对话框：圆角、顶部彩条、底部分隔 —— */
+.el-dialog {
+  border-radius: var(--pos-radius) !important;
+  overflow: hidden;
+}
+.el-dialog__header {
+  padding: 18px 22px !important;
+  background: linear-gradient(90deg, rgba(79,70,229,0.08), rgba(6,182,212,0.05)) !important;
+  border-bottom: 1px solid var(--pos-border);
+}
+.el-dialog__title { font-weight: 600; color: var(--pos-text); }
+.el-dialog__body { padding: 22px !important; }
+.el-dialog__footer {
+  padding: 12px 22px 18px !important;
+  border-top: 1px solid var(--pos-border);
+}
+
+/* —— 空状态：柔和 —— */
+.el-empty__description p { color: var(--pos-text-muted); }
+
+/* —— 表单项 label 加重 —— */
+.el-form-item__label { font-weight: 500; color: var(--pos-text-soft); }
+
+/* —— 上传头像圆角 —— */
+.avatar-uploader .el-upload { border-radius: 12px; }
+
+/* —— 金额/强调文字 —— */
+.warning-text { color: #F59E0B; font-weight: 600; }
+.danger-text  { color: #F43F5E; font-weight: 600; }

@@ -87,7 +87,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     public List<InventoryVO> getWarningInventories() {
         QueryWrapper<Inventory> queryWrapper = new QueryWrapper<>();
-        queryWrapper.apply("stock_quantity <= warning_quantity");
+        queryWrapper.apply("stock_quantity <= warning_quantity OR stock_quantity <= 10");
         queryWrapper.orderByAsc("stock_quantity");
         List<Inventory> inventoryList = inventoryMapper.selectList(queryWrapper);
 

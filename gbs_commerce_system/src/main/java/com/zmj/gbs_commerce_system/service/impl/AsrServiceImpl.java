@@ -12,6 +12,7 @@ import com.huawei.sis.bean.base.RasrSentence;
 import com.zmj.gbs_commerce_system.config.HuaweiAsrProperties;
 import com.zmj.gbs_commerce_system.service.AsrService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.util.Base64;
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 @Service
+@ConditionalOnProperty(name = "asr.provider", havingValue = "huawei", matchIfMissing = true)
 public class AsrServiceImpl implements AsrService {
 
     private final HuaweiAsrProperties asrProperties;
@@ -103,8 +105,9 @@ public class AsrServiceImpl implements AsrService {
                 if (response.getSentenceList() != null && !response.getSentenceList().isEmpty()) {
                     StringBuilder sb = new StringBuilder();
                     for (RasrSentence sentence : response.getSentenceList()) {
-                        if (sentence.getText() != null) {
-                            sb.append(sentence.getText());
+                        String t = sentence.getResult() != null ? sentence.getResult().getText() : null;
+                        if (t != null) {
+                            sb.append(t);
                         }
                     }
                     resultRef.set(sb.toString());

@@ -1,164 +1,115 @@
 # 智慧超市多模态智能体副屏
 
-基于 Spring Boot 3 + Vue 3 的超市收银副屏 AI 助手系统，支持语音/人脸交互。
+面向超市收银场景的前后端分离应用：提供商品、库存、订单、会员、支付和经营报表等功能，并通过语音识别、人脸核验及 AI 助手扩展收银副屏交互。
 
-## 项目介绍
+> 本仓库包含应用代码和开发/部署配置。运行前请自行准备数据库、Redis、RabbitMQ 及所需的第三方服务凭据。不要提交真实密钥、证书、生产数据或个人资料。
 
-本项目是一款超市收银副屏 AI 助手，通过语音识别和人脸识别替代传统收银流程，解决会员核验、订单播报等场景效率问题。
+## 项目组成
 
-**核心亮点：**
-- 多模态交互（语音 + 人脸）
-- 异步解耦（RabbitMQ）
-- 缓存优化（Redis）
-- 无状态认证（Shiro + JWT）
-- 分布式锁防超卖（Redisson）
+| 模块 | 说明 | 主要技术 |
+| --- | --- | --- |
+| `gbs_commerce_system/` | 业务后端：认证、商品、库存、订单、会员、支付、报表、文件及语音接口 | Java 17、Spring Boot 3.4.3、MyBatis-Plus、Shiro/JWT |
+| `gbs_commerce_system_ui/` | 收银和管理端前端，另含 MCP 服务 | Vue 3、Vite 7、Element Plus |
+| `gbs_commerce_system_ui/mcp_server/` | AI Agent、TTS、ASR 和会员/订单查询等 MCP/HTTP 服务 | Python |
+| `ai-assistant-service/` | 独立的 AI 对话与会话服务 | Spring Boot |
+| `MYSQL/` | 数据库初始化、迁移和性能分析 SQL；使用前需检查是否含真实业务数据 | MySQL 8 |
+| `docker-compose.yml` | MySQL、Redis、RabbitMQ、后端、前端和 MCP 服务编排 | Docker Compose |
+
+## 功能概览
+
+- 用户登录、JWT 认证及基于角色/菜单的权限控制。
+- 商品与分类管理、库存校验、订单和支付流程。
+- 会员管理与查询、销售报表及 AI 报表助手。
+- 语音识别和语音播报服务接入；可配置人脸认证、支付宝支付等能力。
+- Redis 缓存、Redisson 分布式锁、RabbitMQ 异步消息及 Prometheus 指标端点。
+- MCP/AI 服务支持对话代理，以及会员、订单等业务查询工具。
+
+第三方能力需使用者自行开通并配置凭据；不同部署配置下可启用的功能可能不同。
 
 ## 技术栈
 
-### 后端
-| 技术 | 版本 | 说明 |
-|---|---|---|
-| Spring Boot | 3.4.3 | 基础框架 |
-| MyBatis-Plus | 3.5.7 | ORM框架 |
-| Shiro | 1.13.0 | 权限认证 |
-| JWT | 0.11.5 | Token方案 |
-| Redis | - | 缓存、分布式锁 |
-| RabbitMQ | - | 消息队列 |
-| Redisson | 3.27.2 | 分布式锁 |
+- **后端：** Java 17、Spring Boot 3.4.3、MyBatis-Plus 3.5.7、Shiro 1.13.0、JWT 0.11.5、MySQL、Redis、RabbitMQ、Redisson。
+- **前端：** Node.js 20.19+（或 22.12+）、Vue 3、Vite 7、Element Plus、Axios。
+- **MCP 服务：** Python 及 `gbs_commerce_system_ui/mcp_server/requirements.txt` 中的依赖。
+- **本地基础设施：** MySQL 8、Redis 7、RabbitMQ 3。
 
-### 前端
-| 技术 | 说明 |
-|---|---|
-| Vue 3 | 前端框架 |
-| Element Plus | UI组件库 |
-| Axios | HTTP请求 |
+## 本地开发
 
-### AI服务
-| 服务 | 功能 |
-|---|---|
-| 华为云 ASR | 语音转文字 |
-| 百度人脸识别 | 刷脸支付 |
-| DeepSeek | AI对话 |
+### 1. 配置依赖服务和凭据
 
-## 核心功能
+复制根目录模板并填写本机配置（PowerShell）：
 
-### 1. 认证授权（Shiro + JWT）
-- 无状态Token认证
-- 权限粒度到按钮级别
-- Token有效期2小时
-
-### 2. 订单管理
-- 事务控制保证数据一致性
-- 分布式锁 + 乐观锁防超卖
-- 订单号生成（时间戳 + 随机数）
-
-### 3. 异步处理（RabbitMQ）
-- 订单支付后异步处理会员积分
-- 响应时间从 2000ms 降至 200ms
-
-### 4. 缓存优化（Redis）
-- Cache-Aside 模式
-- TTL 随机化防雪崩
-- 分布式锁防击穿
-- 布隆过滤器防穿透
-
-### 5. AI集成
-- 华为 ASR 语音识别
-- 百度人脸识别刷脸支付
-
-## 项目结构
-
-```
-supermarket-cashier/
-├── gbs_commerce_system/          # 后端项目
-│   ├── src/main/java/
-│   │   └── com/zmj/gbs_commerce_system/
-│   │       ├── config/           # 配置类
-│   │       ├── controller/       # 控制器
-│   │       ├── service/          # 业务层
-│   │       ├── mapper/           # MyBatis Mapper
-│   │       ├── entity/           # 实体类
-│   │       └── utils/            # 工具类
-│   └── src/test/                 # 单元测试
-│
-├── gbs_commerce_system_ui/       # 前端项目
-│   └── src/
-│       ├── views/                # 页面组件
-│       ├── components/           # 公共组件
-│       └── api/                  # API接口
-│
-└── docker-compose.yml            # Docker编排
+```powershell
+Copy-Item .env.example .env
 ```
 
-## 快速开始
+按需复制 `gbs_commerce_system_ui/.env.example` 为 `gbs_commerce_system_ui/.env`，以及 `gbs_commerce_system_ui/mcp_server/.env.example` 为 `gbs_commerce_system_ui/mcp_server/.env`。后端配置模板见 `gbs_commerce_system/src/main/resources/application-example.yml`；本地运行时应通过环境变量或未跟踪的本机配置提供数据库口令、JWT 密钥和第三方 API 凭据。模板中的 `CHANGE_ME` 仅是占位符，不能直接用于生产。
 
-### 环境要求
-- JDK 17+
-- Node.js 18+
-- MySQL 8.0+
-- Redis 6.0+
-- RabbitMQ 3.12+
+### 2. 初始化数据库
 
-### 后端启动
+准备 MySQL 8 数据库后，检查 `MYSQL/` 中适用于当前版本的建库/迁移脚本，再按项目部署环境执行。不要直接将生产数据库导出文件作为初始化数据提交或公开。
 
-```bash
-git clone https://github.com/Readymspaint02/ArtPick-.git
-cd supermarket-cashier/gbs_commerce_system
-mvn clean package -DskipTests
-java -jar target/gbs_commerce_system-0.0.1-SNAPSHOT.jar
+### 3. 启动后端
+
+```powershell
+cd gbs_commerce_system
+mvn spring-boot:run
 ```
 
-### 前端启动
+默认服务端口为 `8081`，上下文路径为 `/api`。部分 Huawei SIS SDK 依赖在 `pom.xml` 中通过本地 `systemPath` 引用；若本机未准备相应 SDK JAR，Maven 构建可能失败。请通过官方渠道获取并按项目引用路径配置，不要提交未经许可的二进制文件。
 
-```bash
+### 4. 启动前端
+
+```powershell
 cd gbs_commerce_system_ui
 npm install
 npm run dev
 ```
 
-### Docker部署
+Vite 默认开发服务地址通常为 `http://localhost:5173`；API 代理和 AI 服务地址按本机环境变量及 `vite.config.js` 配置调整。生产构建命令为 `npm run build`。
 
-```bash
-cp .env.example .env
-docker-compose up -d --build
+### 5. Docker Compose（可选）
+
+在填写根目录 `.env` 并确认数据库初始化脚本、端口和凭据后，从仓库根目录执行：
+
+```powershell
+docker compose up -d --build
 ```
 
-## 在线体验
+查看状态和日志：
 
-- 演示地址：https://ryo.jufu.vip
-- GitHub：https://github.com/Readymspaint02/ArtPick-
+```powershell
+docker compose ps
+docker compose logs -f backend
+```
 
-## 单元测试
+停止服务：
 
-```bash
+```powershell
+docker compose down
+```
+
+Compose 文件中的数据库/消息队列默认值仅适用于本地开发。部署前必须替换为独立的强凭据，并避免将 `.env` 放入版本控制。
+
+## MCP 服务
+
+安装 Python 环境后，在 `gbs_commerce_system_ui/mcp_server/` 安装 `requirements.txt` 中的依赖，并根据 `.env.example` 模板提供数据库、AI/TTS/ASR 等服务配置。可使用目录内的 `start_local.bat` 启动本地服务；具体启用的服务与配置项以该目录代码和部署方式为准。
+
+## 安全与发布说明
+
+- `.env.example`、`application-example.yml` 等模板只包含变量名、非敏感示例或 `CHANGE_ME` 占位符。请勿将真实配置复制进模板。
+- `.env`、私钥证书、日志、数据库转储、上传文件、构建产物和个人文档不应加入公开仓库。
+- 当前工作副本的历史中曾跟踪环境配置和私钥证书；仅修改当前文件或添加模板不会清除旧提交中的内容。公开或继续推送前应轮换曾使用过的凭据，并制定历史清理方案。
+- `MYSQL/` 下的 SQL 文件以及部署文档也应在公开前检查，确认不含生产数据、口令或内部地址。
+
+## 常用验证
+
+```powershell
+# 后端测试
 cd gbs_commerce_system
 mvn test
+
+# 前端生产构建
+cd gbs_commerce_system_ui
+npm run build
 ```
-
-**测试覆盖：**
-- 订单号生成验证
-- 商品下架校验
-- 库存不足校验
-- 库存扣减成功/失败
-- 乐观锁冲突测试
-- 订单金额计算
-- 积分计算
-
-## 面试考点
-
-| 模块 | 常见问题 |
-|---|---|
-| Shiro + JWT | Token过期处理？为什么要查数据库？ |
-| Redis | 缓存穿透/击穿/雪崩？分布式锁实现？ |
-| RabbitMQ | 消息丢失怎么办？消息积压处理？ |
-| 事务 | @Transactional什么时候失效？如何防超卖？ |
-
-## 作者
-
-**朱铭杰**
-- 邮箱：3500498546@qq.com
-- 个人博客：https://iloveartwork.com
-
-## License
-
-MIT License

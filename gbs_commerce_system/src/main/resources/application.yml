@@ -11,7 +11,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/gbs_commerce_system_02?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=GMT%2B8}
     username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:123456}
+    password: ${SPRING_DATASOURCE_PASSWORD:CHANGE_ME}
 
   jackson:
     date-format: yyyy-MM-dd
@@ -21,7 +21,6 @@ spring:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
       database: 0
       timeout: 10000ms
       lettuce:
@@ -35,7 +34,7 @@ spring:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    password: ${RABBITMQ_PASSWORD:CHANGE_ME}
     virtual-host: /
     listener:
       simple:
@@ -59,22 +58,49 @@ shiro:
   unauthorizedUrl: /unauthorized
 
 jwt:
-  secret: ${JWT_SECRET:mySecretKeyForJWTWhichShouldBeLongerAndMoreSecure123456}
+  secret: ${JWT_SECRET:CHANGE_ME}
   expiration: ${JWT_EXPIRATION:86400000}
 
 baidu:
   ai:
-    app-id: ${BAIDU_AI_APP_ID:}
-    api-key: ${BAIDU_AI_API_KEY:}
-    secret-key: ${BAIDU_AI_SECRET_KEY:}
+    app-id: ${BAIDU_AI_APP_ID:CHANGE_ME}
+    api-key: ${BAIDU_AI_API_KEY:CHANGE_ME}
+    secret-key: ${BAIDU_AI_SECRET_KEY:CHANGE_ME}
     group-id: ${BAIDU_AI_GROUP_ID:test_face_01}
+
+# AI 能力提供方策略：云端(baidu/huawei，默认) 与 本地部署(local) 无缝切换
+face:
+  provider: ${FACE_PROVIDER:baidu}
+  local:
+    endpoint: ${FACE_LOCAL_ENDPOINT:http://localhost:8200}
+
+asr:
+  provider: ${ASR_PROVIDER:huawei}
+  local:
+    endpoint: ${ASR_LOCAL_ENDPOINT:http://localhost:8201}
 
 huawei:
   asr:
-    ak: ${HUAWEI_ASR_AK:HPUAP3REOJYJDOHFTWZK}
-    sk: ${HUAWEI_ASR_SK:clzb7vTMbXm5LbZBzMfAG6ZajpECDxFrEtQSHHHg}
+    ak: ${HUAWEI_ASR_AK:CHANGE_ME}
+    sk: ${HUAWEI_ASR_SK:CHANGE_ME}
     region: ${HUAWEI_ASR_REGION:cn-north-4}
-    project-id: ${HUAWEI_ASR_PROJECT_ID:8cd8fd8f6f824a4d824e64750497f00f}
+    project-id: ${HUAWEI_ASR_PROJECT_ID:CHANGE_ME}
+  iam:
+    username: ${HUAWEI_IAM_USERNAME:}
+    password: ${HUAWEI_IAM_PASSWORD:CHANGE_ME}
+    domain-name: ${HUAWEI_IAM_DOMAIN_NAME:}
+
+alipay:
+  app-id: ${ALIPAY_APP_ID:CHANGE_ME}
+  app-private-key: ${ALIPAY_APP_PRIVATE_KEY:CHANGE_ME}
+  platform-public-key: ${ALIPAY_PLATFORM_PUBLIC_KEY:CHANGE_ME}
+  gateway-url: https://openapi-sandbox.dl.alipaydev.com/gateway.do
+  notify-url: ${ALIPAY_NOTIFY_URL:}
+  return-url: ${ALIPAY_RETURN_URL:http://localhost:5173/payment/result}
+  sign-type: RSA2
+  charset: UTF-8
+  format: json
+  sandbox: true
 
 springdoc:
   swagger-ui:
@@ -102,7 +128,6 @@ redisson:
   config: |
     singleServerConfig:
       address: "redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}"
-      password: "${REDIS_PASSWORD:}"
       database: 0
       connectionPoolSize: 10
       connectionMinimumIdleSize: 5

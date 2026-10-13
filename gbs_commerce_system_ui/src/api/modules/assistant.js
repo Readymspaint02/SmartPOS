@@ -17,3 +17,7 @@ export const fetchRecentOrders = (limit = 10) => {
 export const fetchMemberProfile = (memberId) => {
   return http.get(`/system/member/byMemberId/${memberId}`);
 };
+
+export const fetchMemberAnalysis = (memberId) => {
+  return http.get(`/assistant/member/analysis/${memberId}`);
+};

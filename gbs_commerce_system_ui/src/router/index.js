@@ -3,7 +3,7 @@ import { staticRouter, errorRouter } from './modules/staticRouter';
 import { initDynamicRouter } from './modules/dynamicRouter';
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/shop/'),
   routes: [...staticRouter, ...errorRouter],
 });
 

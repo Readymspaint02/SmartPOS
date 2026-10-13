@@ -7,6 +7,7 @@ import com.zmj.gbs_commerce_system.service.FaceAuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.net.URI;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Service
+@ConditionalOnProperty(name = "face.provider", havingValue = "baidu", matchIfMissing = true)
 public class FaceAuthServiceImpl implements FaceAuthService {
 
     private static final Logger log = LoggerFactory.getLogger(FaceAuthServiceImpl.class);

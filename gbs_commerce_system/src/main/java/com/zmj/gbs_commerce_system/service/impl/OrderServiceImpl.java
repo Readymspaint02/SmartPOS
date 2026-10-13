@@ -247,7 +247,11 @@ public class OrderServiceImpl implements OrderService {
         Integer paymentMethod = Integer.valueOf(orderData.get("paymentMethod").toString());
         order.setPaymentMethod(paymentMethod);   // 支付方式（1现金 2微信 3支付宝 5刷脸）
 
-        order.setOrderStatus(1); // 订单状态：1已支付
+        if (paymentMethod == 3) {
+            order.setOrderStatus(0);
+        } else {
+            order.setOrderStatus(1);
+        }
 
         // 获取当前登录用户（收银员）
         // 面试考点：SecurityUtils如何获取当前用户？

@@ -64,6 +64,24 @@ class MemberRepository:
             return None
         return self.get_member(member_id)
 
+    def search_by_phone_suffix(self, suffix: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """按手机号尾号倒序匹配（智慧助手高频问法：尾号3333的会员）。"""
+        cleaned = (suffix or "").strip()
+        if not cleaned:
+            return []
+        if not cleaned.isdigit():
+            return []
+        like_value = f"%{cleaned}"
+        sql = (
+            f"SELECT * FROM `{self.table}` "
+            f"WHERE `{self.phone_column}` LIKE %s "
+            f"ORDER BY `update_time` DESC LIMIT %s"
+        )
+        with get_connection() as conn, conn.cursor() as cursor:
+            cursor.execute(sql, (like_value, max(1, min(int(limit), 50))))
+            rows = cursor.fetchall() or []
+        return [normalize_record(row) for row in rows]
+
 
 class OrderRepository:
     """封装订单与订单明细的查询逻辑。"""
@@ -262,3 +280,105 @@ class AnalyticsRepository:
             }
             for row in rows
         ]
+
+
+class ProductRepository:
+    """商品查询，服务于智慧助手的商品搜索与语音下单解析。"""
+
+    def __init__(self) -> None:
+        self.product_table = clean_identifier(os.getenv("PRODUCT_TABLE", "product"), "product")
+        self.category_table = clean_identifier(
+            os.getenv("PRODUCT_CATEGORY_TABLE", "product_category"), "product_category"
+        )
+
+    def search_products(self, keyword: Optional[str], limit: int = 10) -> List[Dict[str, Any]]:
+        cleaned = (keyword or "").strip()
+        base_sql = (
+            f"SELECT p.id, p.product_name, p.product_code, p.price, p.unit, "
+            f"p.status, p.sales_count, pc.category_name "
+            f"FROM `{self.product_table}` p "
+            f"LEFT JOIN `{self.category_table}` pc ON p.category_id = pc.id"
+        )
+        params: List[Any] = []
+        if cleaned:
+            like_value = f"%{cleaned}%"
+            base_sql += (
+                " WHERE p.product_name LIKE %s OR p.product_code LIKE %s OR p.barcode LIKE %s"
+            )
+            params.extend([like_value, like_value, like_value])
+        base_sql += " ORDER BY p.status ASC, p.sales_count DESC LIMIT %s"
+        params.append(max(1, min(int(limit), 50)))
+        with get_connection() as conn, conn.cursor() as cursor:
+            cursor.execute(base_sql, params)
+            rows = cursor.fetchall() or []
+        return [
+            {
+                "product_id": row.get("id"),
+                "product_name": row.get("product_name"),
+                "product_code": row.get("product_code"),
+                "price": round(float(row.get("price") or 0), 2),
+                "unit": row.get("unit"),
+                "status": "正常" if int(row.get("status") or 0) == 0 else "下架",
+                "sales_count": int(row.get("sales_count") or 0),
+                "category_name": row.get("category_name") or "未分类",
+            }
+            for row in rows
+        ]
+
+    def get_product(self, product_id: Any) -> Optional[Dict[str, Any]]:
+        query = f"SELECT * FROM `{self.product_table}` WHERE id=%s LIMIT 1"
+        with get_connection() as conn, conn.cursor() as cursor:
+            cursor.execute(query, (product_id,))
+            row = cursor.fetchone()
+        if not row:
+            return None
+        return normalize_record(row)
+
+
+class InventoryRepository:
+    """库存查询，承载低库存预警与语音下单的库存校验。"""
+
+    def __init__(self) -> None:
+        self.inventory_table = clean_identifier(
+            os.getenv("INVENTORY_TABLE", "inventory"), "inventory"
+        )
+        self.product_table = clean_identifier(os.getenv("PRODUCT_TABLE", "product"), "product")
+
+    def list_low_stock(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """返回 stock_quantity <= warning_quantity 的商品（低库存预警）。"""
+        sql = (
+            "SELECT i.product_id, p.product_name, i.stock_quantity, i.warning_quantity "
+            f"FROM `{self.inventory_table}` i "
+            f"JOIN `{self.product_table}` p ON i.product_id = p.id "
+            "WHERE i.stock_quantity <= i.warning_quantity "
+            "ORDER BY (i.warning_quantity - i.stock_quantity) DESC, p.product_name ASC "
+            "LIMIT %s"
+        )
+        with get_connection() as conn, conn.cursor() as cursor:
+            cursor.execute(sql, (max(1, min(int(limit), 100)),))
+            rows = cursor.fetchall() or []
+        return [
+            {
+                "product_id": row.get("product_id"),
+                "product_name": row.get("product_name"),
+                "stock_quantity": int(row.get("stock_quantity") or 0),
+                "warning_quantity": int(row.get("warning_quantity") or 0),
+            }
+            for row in rows
+        ]
+
+    def get_stock(self, product_id: Any) -> Optional[Dict[str, Any]]:
+        query = (
+            f"SELECT product_id, stock_quantity, warning_quantity "
+            f"FROM `{self.inventory_table}` WHERE product_id=%s LIMIT 1"
+        )
+        with get_connection() as conn, conn.cursor() as cursor:
+            cursor.execute(query, (product_id,))
+            row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            "product_id": row.get("product_id"),
+            "stock_quantity": int(row.get("stock_quantity") or 0),
+            "warning_quantity": int(row.get("warning_quantity") or 0),
+        }

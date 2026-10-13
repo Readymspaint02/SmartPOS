@@ -123,7 +123,12 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/auth/login", "anon");      // 登录接口
         filterChainDefinitionMap.put("/auth/faceLogin", "anon");  // 人脸登录
         filterChainDefinitionMap.put("/auth/register", "anon");   // 注册接口
+        filterChainDefinitionMap.put("/auth/roles", "anon");      // 登录页角色下拉框
+        filterChainDefinitionMap.put("/auth/userRoles", "anon");  // 混合方案：按账号带出角色
         filterChainDefinitionMap.put("/logout", "logout");        // 登出接口
+
+        // ASR WebSocket 代理端点（浏览器直连后端，后端再连华为云）
+        filterChainDefinitionMap.put("/asr/stream", "anon");
 
         // 人脸识别接口
         filterChainDefinitionMap.put("/face/config", "anon");     // 配置检查接口
@@ -149,6 +154,11 @@ public class ShiroConfig {
 
         // Prometheus监控端点（无需登录）
         filterChainDefinitionMap.put("/actuator/**", "anon");
+
+        // 支付宝回调接口（无需登录，由支付宝调用）
+        filterChainDefinitionMap.put("/alipay/notify", "anon");
+        filterChainDefinitionMap.put("/alipay/sync/**", "anon");
+        filterChainDefinitionMap.put("/alipay/status/**", "anon");
 
         // ===== 2. 需要JWT认证（登录后即可访问）=====
         // 这些接口只需要登录，不需要特定权限

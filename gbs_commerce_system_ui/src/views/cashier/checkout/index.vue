@@ -284,6 +284,32 @@
         <el-button @click="closeFacePay">取消</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      title="支付宝扫码支付"
+      v-model="alipayDialogVisible"
+      width="400px"
+      :close-on-click-modal="false"
+      @close="cancelAlipayPayment"
+    >
+      <div class="alipay-qrcode-content">
+        <p class="pay-amount">支付金额：<strong>￥{{ paidAmount.toFixed(2) }}</strong></p>
+        <div class="qrcode-wrapper">
+          <img :src="`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(alipayQrCode)}`" alt="支付二维码" />
+        </div>
+        <p class="pay-tip">请使用支付宝扫描二维码完成支付</p>
+        <div class="pay-status">
+          <el-icon class="is-loading"><Loading /></el-icon>
+          <span>等待支付中...</span>
+        </div>
+        <el-button type="primary" @click="manualConfirmPayment" :loading="manualConfirmLoading" style="margin-top: 16px">
+          我已支付完成，手动确认
+        </el-button>
+      </div>
+      <template #footer>
+        <el-button @click="cancelAlipayPayment">取消支付</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -295,6 +321,7 @@ import html2canvas from 'html2canvas'
 import { getProductByBarcode, getProductByCode } from '@/api/modules/product'
 import { getInventoryByProductId } from '@/api/modules/inventory'
 import { checkout } from '@/api/modules/order'
+import { createAlipayPayment, queryAlipayLocalStatus, syncAlipayStatus } from '@/api/modules/alipay'
 import BarcodeScanner from '@/components/BarcodeScanner.vue'
 import Receipt from '@/components/Receipt.vue'
 import http from '@/api/request'
@@ -338,8 +365,44 @@ const totalAmount = computed(() =>
 const paidAmount = computed(() => Math.max(0, totalAmount.value - discountAmount.value))
 
 onMounted(() => {
+  loadPendingVoiceOrder()
   focusInput()
 })
+
+// 读取 AI 语音下单预填订单（SmartAgentWidget 跳转过来时写入 sessionStorage）
+const loadPendingVoiceOrder = () => {
+  const raw = sessionStorage.getItem('pendingVoiceOrder')
+  if (!raw) return
+  try {
+    const pending = JSON.parse(raw)
+    // 用一次即清，避免刷新/二次进入误覆盖手动收银
+    sessionStorage.removeItem('pendingVoiceOrder')
+    const items = Array.isArray(pending.items) ? pending.items : []
+    if (items.length === 0) return
+    cart.value = items.map((it) => ({
+      productId: it.productId,
+      productName: it.productName,
+      productCode: it.productCode || '',
+      barcode: it.barcode || '--',
+      price: Number(it.price) || 0,
+      quantity: Number(it.quantity) || 1,
+      stock: Number(it.stock) || 0,
+    }))
+    // 预填会员（若有）
+    if (pending.member && pending.member.member_id) {
+      memberInfo.value = {
+        memberId: pending.member.member_id,
+        name: pending.member.name,
+        level: pending.member.level,
+        balance: Number(pending.member.balance) || 0,
+        points: pending.member.points || 0,
+      }
+    }
+    ElMessage.success(`已从 AI 助手预填 ${cart.value.length} 项商品，请选择支付方式后结算`)
+  } catch (e) {
+    console.error('解析预填订单失败', e)
+  }
+}
 
 const focusInput = () => {
   nextTick(() => barcodeInputRef.value?.focus())
@@ -501,6 +564,11 @@ const handleCheckout = () => {
     return
   }
 
+  if (paymentMethod.value === 3) {
+    handleAlipayCheckout()
+    return
+  }
+
   ElMessageBox.confirm(`确认结算 ¥${paidAmount.value.toFixed(2)} ?`, '结算确认', {
     type: 'info',
   })
@@ -546,6 +614,149 @@ const handleCheckout = () => {
       }
     })
     .catch(() => {})
+}
+
+const handleAlipayCheckout = async () => {
+  if (memberInfo.value && paymentMethod.value === 6) {
+    if ((memberInfo.value.balance || 0) < paidAmount.value) {
+      ElMessage.error('会员余额不足')
+      return
+    }
+  }
+
+  try {
+    checkoutLoading.value = true
+
+    const orderData = {
+      cartItems: cart.value.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+      paidAmount: paidAmount.value,
+      discountAmount: discountAmount.value,
+      paymentMethod: 3,
+      remark: remark.value,
+    }
+
+    if (memberInfo.value) {
+      orderData.memberId = memberInfo.value.memberId
+    }
+
+    const res = await checkout(orderData)
+    if (res.code === 200) {
+      const order = res.data
+
+      const payRes = await createAlipayPayment({
+        orderNo: order.orderNo,
+        amount: order.paidAmount,
+        subject: `超市购物-${order.orderNo}`
+      })
+
+      if (payRes.code === 200 && payRes.data) {
+        alipayQrCode.value = payRes.data
+        alipayOrderNo.value = order.orderNo
+        alipayDialogVisible.value = true
+        startPollingPayment(order.orderNo)
+      } else {
+        ElMessage.error(payRes.msg || '支付宝支付创建失败')
+      }
+    } else {
+      ElMessage.error(res.msg || '订单创建失败')
+    }
+  } catch (error) {
+    console.error(error)
+    ElMessage.error(error?.message || '支付失败')
+  } finally {
+    checkoutLoading.value = false
+  }
+}
+
+const alipayDialogVisible = ref(false)
+const alipayQrCode = ref('')
+const alipayOrderNo = ref('')
+let pollingTimer = null
+let pollingCount = 0
+const MAX_POLLING_COUNT = 100
+const manualConfirmLoading = ref(false)
+
+const startPollingPayment = (orderNo) => {
+  stopPollingPayment()
+  pollingCount = 0
+  pollingTimer = setInterval(async () => {
+    pollingCount++
+    if (pollingCount > MAX_POLLING_COUNT) {
+      stopPollingPayment()
+      ElMessage.warning('支付等待超时，请手动确认')
+      return
+    }
+    try {
+      const res = await queryAlipayLocalStatus(orderNo)
+      if (res.code === 200 && res.data?.success) {
+        const status = res.data.tradeStatus
+        if (status === 'TRADE_SUCCESS') {
+          stopPollingPayment()
+          alipayDialogVisible.value = false
+          currentOrder.value = { orderNo, paidAmount: res.data.paidAmount }
+          successDialogVisible.value = true
+          cart.value = []
+          discountAmount.value = 0
+          remark.value = ''
+          memberInfo.value = null
+          memberIdInput.value = ''
+          ElMessage.success('支付成功')
+        }
+      }
+    } catch (error) {
+      console.error('轮询支付状态失败', error)
+    }
+  }, 2000)
+}
+
+const stopPollingPayment = () => {
+  if (pollingTimer) {
+    clearInterval(pollingTimer)
+    pollingTimer = null
+  }
+}
+
+const cancelAlipayPayment = () => {
+  stopPollingPayment()
+  alipayDialogVisible.value = false
+  alipayQrCode.value = ''
+  alipayOrderNo.value = ''
+}
+
+const manualConfirmPayment = async () => {
+  if (!alipayOrderNo.value) return
+  
+  manualConfirmLoading.value = true
+  try {
+    await syncAlipayStatus(alipayOrderNo.value)
+    const res = await queryAlipayLocalStatus(alipayOrderNo.value)
+    if (res.code === 200 && res.data?.success) {
+      if (res.data.tradeStatus === 'TRADE_SUCCESS') {
+        stopPollingPayment()
+        alipayDialogVisible.value = false
+        currentOrder.value = { orderNo: alipayOrderNo.value, paidAmount: res.data.paidAmount }
+        successDialogVisible.value = true
+        cart.value = []
+        discountAmount.value = 0
+        remark.value = ''
+        memberInfo.value = null
+        memberIdInput.value = ''
+        ElMessage.success('支付成功')
+      } else {
+        ElMessage.warning('订单尚未支付成功，请稍后再试')
+      }
+    } else {
+      ElMessage.error('查询订单状态失败')
+    }
+  } catch (error) {
+    console.error(error)
+    ElMessage.error('查询失败')
+  } finally {
+    manualConfirmLoading.value = false
+  }
 }
 
 const handlePrint = () => {
@@ -958,5 +1169,48 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.alipay-qrcode-content {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.pay-amount {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.pay-amount strong {
+  color: #f56c6c;
+  font-size: 24px;
+}
+
+.qrcode-wrapper {
+  display: inline-block;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.qrcode-wrapper img {
+  display: block;
+}
+
+.pay-tip {
+  color: #909399;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.pay-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #409eff;
+  font-size: 14px;
 }
 </style>
