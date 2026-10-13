@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-backend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
 
@@ -17,20 +17,20 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        cache: maven
 
     - name: Build backend
-      run: mvn -B clean package -DskipTests
       working-directory: gbs_commerce_system
+      run: mvn -B clean package -DskipTests
 
     - name: Upload backend artifact
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: backend-jar
         path: gbs_commerce_system/target/*.jar
 
   build-frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
 
@@ -38,16 +38,15 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: gbs_commerce_system_ui/package-lock.json
 
     - name: Install & Build
       working-directory: gbs_commerce_system_ui
       run: |
-        npm ci
+        npm install
         npm run build
 
     - name: Upload frontend artifact
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: frontend-dist
