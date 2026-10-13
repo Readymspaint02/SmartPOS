@@ -120,20 +120,6 @@
             </exclusions>
         </dependency>
 
-       
-            <exclusions>
-                <!-- 排除掉默认的（不带分类器的）依赖，避免冲突 -->
-                <exclusion>
-                    <groupId>org.apache.shiro</groupId>
-                    <artifactId>shiro-web</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.apache.shiro</groupId>
-                    <artifactId>shiro-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <!-- 显式引入带 jakarta 分类器的核心模块 -->
         <dependency>
             <groupId>org.apache.shiro</groupId>

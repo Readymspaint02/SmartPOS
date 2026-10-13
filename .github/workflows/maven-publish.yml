@@ -18,6 +18,11 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
+    - name: Install Huawei SDK locally
+      run: |
+        mvn install:install-file -Dfile=huaweicloud-java-sdk-sis-1.8.7/jar/huaweicloud-java-sdk-sis-1.8.7.jar -DgroupId=com.huawei.sis -DartifactId=huaweicloud-java-sdk-sis -Dversion=1.8.7 -Dpackaging=jar
+        mvn install:install-file -Dfile=huaweicloud-java-sdk-sis-1.8.7/jar/java-sdk-core-3.0.12.jar -DgroupId=com.huawei -DartifactId=java-sdk-core -Dversion=3.0.12 -Dpackaging=jar
+
     - name: Build backend
       working-directory: gbs_commerce_system
       run: mvn -B clean package -DskipTests
